@@ -10,9 +10,21 @@ function createWindow() {
     },
   });
 
-  // and load the index.html of the app.
-  mainWindow.loadFile(path.join(__dirname, '../index.html'));
-  // mainWindow.loadURL('https://calpoly.atlassian.net/jira/projects');
+  const urls = [
+    'http://solidus.calpoly.edu/WebApps/ContactCenter/WallDisplayScreens/Display?current=s458263',
+    'https://dashboard.capenetworks.com',
+    'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
+  ];
+
+  let urlCount = 0;
+  setInterval(() => {
+    mainWindow.loadURL(urls[urlCount]);
+
+    urlCount += 1;
+    if (urlCount > urls.length - 1) urlCount = 0;
+  }, 10000);
+
+  // mainWindow.loadURL(urls[2]);
 
   mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: ['*://*/*'] },
     (d, c) => {
