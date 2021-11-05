@@ -18,24 +18,19 @@ function createWindow() {
 
   let urlCount = 0;
   setInterval(() => {
-    mainWindow.loadURL(urls[urlCount]);
+    const minute = (new Date()).getMinutes();
+    const hour = (new Date()).getHours();
 
-    urlCount += 1;
-    if (urlCount > urls.length - 1) urlCount = 0;
+    if (hour === 8 && minute < 15) {
+      mainWindow.loadFile(path.join(__dirname, '../src/open.html'));
+    } else if (hour === 4 && minute > 50) {
+      mainWindow.loadFile(path.join(__dirname, '../src/close.html'));
+    } else {
+      mainWindow.loadURL(urls[urlCount]);
+      urlCount += 1;
+      if (urlCount > urls.length - 1) urlCount = 0;
+    }
   }, 10000);
-
-  // mainWindow.loadURL(urls[2]);
-
-  mainWindow.webContents.session.webRequest.onHeadersReceived({ urls: ['*://*/*'] },
-    (d, c) => {
-      if (d.responseHeaders['X-Frame-Options']) {
-        delete d.responseHeaders['X-Frame-Options'];
-      } else if (d.responseHeaders['x-frame-options']) {
-        delete d.responseHeaders['x-frame-options'];
-      }
-
-      c({ cancel: false, responseHeaders: d.responseHeaders });
-    });
 }
 
 // This method will be called when Electron has finished
