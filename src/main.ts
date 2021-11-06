@@ -23,7 +23,7 @@ function createWindow() {
 
     if (hour === 8 && minute < 15) {
       mainWindow.loadFile(path.join(__dirname, '../src/open.html'));
-    } else if (hour === 4 && minute > 50) {
+    } else if (hour === 16 && minute > 50) {
       mainWindow.loadFile(path.join(__dirname, '../src/close.html'));
     } else {
       mainWindow.loadURL(urls[urlCount]);
