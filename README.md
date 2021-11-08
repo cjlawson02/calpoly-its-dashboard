@@ -6,7 +6,7 @@ This application is used on a semi-headless Mac Mini (running Ubuntu) connected 
 ## Features
 
 - Cycling dashboards (between Mitel Status, Aruba Dashboard, and a JSM Dashboard)
-- Auto display on/off at open/close times (via Cronjob using [displayctl.sh](https://github.com/Chris2fourlaw/calpoly-its-dashboard/displayctl.sh))
+- Auto display on/off at open/close times (via Cronjob using [displayctl.sh](https://github.com/Chris2fourlaw/calpoly-its-dashboard/blob/main/displayctl.sh))
 - Auto updating (via Cronjob using `git pull` and restarting app)
 - Custom Service Desk opening/closing messages including daily checklists
 
