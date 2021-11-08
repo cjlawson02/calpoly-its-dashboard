@@ -16,11 +16,16 @@ function createWindow() {
     'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
   ];
 
+  // To setup JIRA or Aruba, uncomment the respective choice and comment out the setInterval block
+  // mainWindow.loadURL(https://dashboard.capenetworks.com); // Aruba
+  // mainWindow.loadURL(https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190); // JIRA
+
   let urlCount = 0;
   setInterval(() => {
     const minute = (new Date()).getMinutes();
     const hour = (new Date()).getHours();
 
+    // Show open or close at the beginning or end of the day, otherwise cycle
     if (hour === 8 && minute < 15) {
       mainWindow.loadFile(path.join(__dirname, '../src/open.html'));
     } else if (hour === 16 && minute > 50) {
