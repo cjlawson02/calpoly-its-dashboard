@@ -6,7 +6,7 @@ This application is used on a semi-headless Mac Mini (running Ubuntu) connected 
 ## Features
 
 - Cycling dashboards (between Mitel Status, Aruba Dashboard, and a JSM Dashboard)
-- Auto display on/off at open/close times (via Cronjob using [displayctl.sh](https://github.com/Chris2fourlaw/calpoly-its-dashboard/blob/main/displayctl.sh))
+- Auto display on/off at open/close times (via Cronjob using [displayctl.sh](https://github.com/Chris2fourlaw/calpoly-its-dashboard/blob/main/scripts/displayctl.sh))
 - Auto updating (via Cronjob using `git pull` and restarting app)
 - Custom Service Desk opening/closing messages including daily checklists
 
@@ -33,5 +33,7 @@ npm install
 # Run the app
 npm start
 ```
+
+If you want to take advantage of the auto on/off display and auto updating, implement the [crontab](https://github.com/Chris2fourlaw/calpoly-its-dashboard/blob/main/scripts/crontab) in the scripts folder.
 
 Note: If you're using Linux Bash for Windows, [see this guide](https://www.howtogeek.com/261575/how-to-run-graphical-linux-desktop-applications-from-windows-10s-bash-shell/) or use `node` from the command prompt.
