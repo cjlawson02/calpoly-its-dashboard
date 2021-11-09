@@ -15,5 +15,9 @@
         "@typescript-eslint"
     ],
     "rules": {
+        "indent": [
+            "error",
+            4
+        ]
     }
 }

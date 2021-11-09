@@ -1,0 +1,3 @@
+0 7 * * * killall electron; cd /home/lancoord/Desktop/calpoly-its-dashboard && git pull; npm i && DISPLAY=:0.0 npm start
+0 8 * * * /bin/sh /home/lancoord/Desktop/calpoly-its-dashboard/scripts/displayctl.sh on
+0 17 * * * /bin/sh /home/lancoord/Desktop/calpoly-its-dashboard/scripts/displayctl.sh off
