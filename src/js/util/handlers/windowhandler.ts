@@ -34,7 +34,7 @@ export default class WindowHandler extends Handler {
     async createWindow() {
         // Create the browser window.
         this.m_mainWindow = new BrowserWindow({
-            kiosk: false,
+            kiosk: true,
             webPreferences: {
                 nodeIntegration: false, // is default value after Electron v5
                 contextIsolation: true, // protect against prototype pollution

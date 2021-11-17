@@ -17,11 +17,10 @@
     "demo",
     "typescript"
   ],
-  "author": "GitHub",
+  "author": "Chris Lawson",
   "license": "CC0-1.0",
   "devDependencies": {
     "@types/bootstrap": "^5.1.6",
-    "@types/request-promise": "^4.1.48",
     "@types/slack-node": "^0.1.4",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
@@ -33,7 +32,7 @@
   "dependencies": {
     "@slack/web-api": "^6.4.0",
     "bootstrap": "^5.1.3",
-    "electron": "^15.2.0",
+    "electron": "^16.0.0",
     "request": "^2.88.2",
     "ts-priority-queue": "^0.1.1"
   }
