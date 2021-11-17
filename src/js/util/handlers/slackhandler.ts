@@ -1,13 +1,22 @@
-import { WebClient, ErrorCode } from '@slack/web-api';
+import { WebClient } from '@slack/web-api';
+import { AlertLevel } from '../alert';
 import AlertHandler from './alerthandler';
+import Handler from './handler';
 
-export default class SlackHandler {
+export default class SlackHandler extends Handler {
     private m_alertHandler: AlertHandler;
     private m_client: WebClient;
+    private m_channelID: string;
+    private m_prevMessageText: string;
 
-    constructor(alertHandler: AlertHandler, token: string) {
+    constructor(alertHandler: AlertHandler, token: string, channelID: string) {
+        super();
         this.m_alertHandler = alertHandler;
         this.m_client = new WebClient(token);
+        this.m_channelID = channelID;
+        this.getLatestMessage(this.m_channelID).then((response) => {
+            this.m_prevMessageText = response.messages[0].text;
+        });
     }
 
     // Find conversation ID using the conversations.list method
@@ -16,16 +25,14 @@ export default class SlackHandler {
             // Call the conversations.list method using the built-in WebClient
             const result = await this.m_client.conversations.list();
 
-            for (const channel of result.channels) {
+            result.channels.forEach((channel) => {
                 if (channel.name === name) {
-                    let conversationId = channel.id;
+                    const conversationId = channel.id;
 
                     // Print result
                     console.log(`Found conversation ID: ${conversationId}`);
-                    // Break from for loop
-                    break;
                 }
-            }
+            });
         } catch (error) {
             console.error(error);
         }
@@ -51,5 +58,14 @@ export default class SlackHandler {
         }
 
         return conversationHistory;
+    }
+
+    update() {
+        this.getLatestMessage(this.m_channelID).then((response) => {
+            const responseText: string = response.messages[0].text;
+            if (responseText !== this.m_prevMessageText) {
+                this.m_alertHandler.raiseAlert(AlertLevel.warning, 'New Incident Raised!', responseText);
+            }
+        });
     }
 }

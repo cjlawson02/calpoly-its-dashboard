@@ -1,119 +1,54 @@
-import {
-    app, BrowserWindow, ipcMain,
-} from 'electron';
-import * as path from 'path';
-import { AlertLevel } from './util/alert';
+import { app, BrowserWindow } from 'electron';
 
-import AlertHandler from './util/alerthandler';
-import SlackHandler from './util/slack';
+import Handler from './util/handlers/handler';
+import AlertHandler from './util/handlers/alerthandler';
+import MitelHandler from './util/handlers/mitelhandler';
+import SlackHandler from './util/handlers/slackhandler';
+import WindowHandler from './util/handlers/windowhandler';
 
+//
+// Tunables
+//
+
+// Mitel
+const ONLINE_AGENT_MINIMUM = 2;
+const FREE_AGENT_MINIMUM = 1;
+const CALL_QUEUE_THRESHOLD = 2;
+
+// Slack
 const { SLACK_TOKEN } = process.env;
+const SLACK_INCIDENT_CHANNEL = 'CM8KV8A1M';
 
-let mainWindow: BrowserWindow;
+// Main Window
+const urls = [
+    'http://solidus.calpoly.edu/WebApps/ContactCenter/WallDisplayScreens/Display?current=s458263',
+    'https://dashboard.capenetworks.com',
+    'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
+];
+
+// To setup JIRA or Aruba, set setup to true and uncomment the respective choice
+const setup = false;
+// windowHandler.getWindow().loadURL('https://dashboard.capenetworks.com'); // Aruba
+// windowHandler.getWindow().loadURL('https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190'); // JIRA
+
+//
+// Handler setup
+//
+
+// Alert Handler
 const alertHandler = new AlertHandler();
-// const slackHandler = new SlackHandler(alertHandler, SLACK_TOKEN); // commented out until we get a token
 
-async function createWindow() {
-    // Create the browser window.
-    mainWindow = new BrowserWindow({
-        fullscreen: true,
-        webPreferences: {
-            nodeIntegration: false, // is default value after Electron v5
-            contextIsolation: true, // protect against prototype pollution
-            preload: path.join(__dirname, 'preload.js'),
-        },
-    });
+// Mitel Handler
+const mitelHandler = new MitelHandler(alertHandler, ONLINE_AGENT_MINIMUM, FREE_AGENT_MINIMUM, CALL_QUEUE_THRESHOLD);
 
-    enum DashState {
-        opening,
-        closing,
-        loop,
-        alert,
-        none
-    }
+// Slack Handler
+// const slackHandler = new SlackHandler(alertHandler, SLACK_TOKEN, SLACK_INCIDENT_CHANNEL); // commented out until we get a token
 
-    let currentState = DashState.none;
-    let prevState = DashState.none;
-    let urlCount = 0;
+// Window Handler
+const windowHandler = new WindowHandler(alertHandler, urls);
 
-    const urls = [
-        'http://solidus.calpoly.edu/WebApps/ContactCenter/WallDisplayScreens/Display?current=s458263',
-        'https://dashboard.capenetworks.com',
-        'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
-    ];
-
-    // To setup JIRA or Aruba, uncomment the respective choice and comment out the setInterval block
-    // mainWindow.loadURL('https://dashboard.capenetworks.com'); // Aruba
-    // mainWindow.loadURL('https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190'); // JIRA
-
-    setInterval(() => {
-        // Set state accordingly for opening/closing/alert/loop
-        const minute = (new Date()).getMinutes();
-        const hour = (new Date()).getHours();
-        const currentAlert = alertHandler.getCurrentAlert();
-
-        if (currentAlert) {
-            currentState = DashState.alert;
-        } else if (hour === 8 && minute < 15) {
-            currentState = DashState.opening;
-        } else if (hour === 16 && minute > 50) {
-            currentState = DashState.closing;
-        } else {
-            currentState = DashState.loop;
-        }
-
-        // Choose what to diplay
-        switch (currentState) {
-        case DashState.opening:
-            if (prevState !== DashState.opening) mainWindow.loadFile(path.join(__dirname, '../src/html/open.html'));
-            prevState = DashState.opening;
-            break;
-        case DashState.closing:
-            if (prevState !== DashState.closing) mainWindow.loadFile(path.join(__dirname, '../src/html/close.html'));
-            prevState = DashState.closing;
-            break;
-        case DashState.loop:
-            mainWindow.loadURL(urls[urlCount]);
-            urlCount += 1;
-            if (urlCount > urls.length - 1) urlCount = 0;
-            prevState = DashState.loop;
-            break;
-        case DashState.alert:
-            mainWindow.loadFile(path.join(__dirname, '../src/html/alert.html'));
-            prevState = DashState.alert;
-            break;
-        default:
-            break;
-        }
-    }, 10000); // Repeat every 10 seconds
-}
-
-// Send alerts info if needed
-ipcMain.on('alert-page-ready', (event) => {
-    if (alertHandler.getCurrentAlert()) {
-        event.sender.send('alert-title', alertHandler.getCurrentAlert().getTitle().toString());
-        event.sender.send('alert-desc', alertHandler.getCurrentAlert().getDescription().toString());
-        event.sender.send('alert-level', alertHandler.getCurrentAlert().getLevel());
-    }
-});
-
-// Slack incident checker
-const incidentChannelID = 'CM8KV8A1M';
-let prevMessageText: string;
-
-// commented out until we get a token
-
-// slackHandler.getLatestMessage(incidentChannelID).then((response) => {
-//     prevMessageText = response.messages[0].text;
-// });
-// setInterval(() => {
-//     slackHandler.getLatestMessage(incidentChannelID).then((response) => {
-//         const responseText: string = response.messages[0].text;
-//         if (responseText !== prevMessageText) {
-//             alertHandler.raiseAlert(AlertLevel.warning, 'New Incident Raised!', responseText);
-//         }
-//     });
-// }, 10000);
+// Combine handlers
+const handlers: Handler[] = [mitelHandler, alertHandler, windowHandler];
 
 //
 // Electron stuff
@@ -123,12 +58,19 @@ let prevMessageText: string;
 // initialization and is ready to create browser windows.
 // Some APIs can only be used after this event occurs.
 app.on('ready', () => {
-    createWindow();
+    windowHandler.createWindow();
+
+    if (!setup) {
+        handlers.forEach((handler) => handler.update());
+        setInterval(() => {
+            handlers.forEach((handler) => handler.update());
+        }, 10000); // Repeat every 10 seconds
+    }
 
     app.on('activate', () => {
         // On macOS it's common to re-create a window in the app when the
         // dock icon is clicked and there are no other windows open.
-        if (BrowserWindow.getAllWindows().length === 0) createWindow();
+        if (BrowserWindow.getAllWindows().length === 0) windowHandler.createWindow();
     });
 });
 
