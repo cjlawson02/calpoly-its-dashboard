@@ -1,10 +1,13 @@
 import request from 'request';
+
 import Handler from './handler';
 import { Alert, AlertLevel } from '../alert';
 import AlertHandler from './alerthandler';
+import HoursHandler from './hourshandler';
 
 export default class MitelHandler extends Handler {
     private m_alertHandler: AlertHandler;
+    private m_hoursHandler: HoursHandler;
 
     private ONLINE_AGENT_MINIMUM: number;
     private m_onlineAgentNum: number;
@@ -19,9 +22,10 @@ export default class MitelHandler extends Handler {
     private m_prevQueueNum: number;
     private m_currentQueueAlert: Alert;
 
-    constructor(alertHandler: AlertHandler, agentMinimum: number, freeMinimum: number, queueThreshold: number) {
+    constructor(alertHandler: AlertHandler, hoursHandler: HoursHandler, agentMinimum: number, freeMinimum: number, queueThreshold: number) {
         super();
         this.m_alertHandler = alertHandler;
+        this.m_hoursHandler = hoursHandler;
 
         this.ONLINE_AGENT_MINIMUM = agentMinimum;
         this.FREE_AGENT_MINIMUM = freeMinimum;
@@ -56,25 +60,21 @@ export default class MitelHandler extends Handler {
 
     handleAgentAlerts() {
         if (this.m_onlineAgentNum <= this.ONLINE_AGENT_MINIMUM) {
-            if (!this.m_currentOnlineAgentAlert) this.m_currentOnlineAgentAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, 'Not enought agents logged in!', 'There are not enough phone agents logged in. Please get some people on the phones');
+            if (!this.m_currentOnlineAgentAlert) this.m_currentOnlineAgentAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, 'Not enough agents logged in!', 'There are not enough phone agents logged in. Please get some people on the phones');
         } else if (this.m_currentOnlineAgentAlert) {
             this.m_currentOnlineAgentAlert.clear();
-            this.m_currentOnlineAgentAlert = null;
         }
     }
 
     handleFreeAlerts() {
         if (this.m_freeAgentNum <= this.FREE_AGENT_MINIMUM) {
-            if (!this.m_currentFreeAgentAlert) this.m_currentFreeAgentAlert = this.m_alertHandler.raiseAlert(AlertLevel.warning, 'Not enought agents logged in!', 'There are not enough phone agents logged in. Please get some people on the phones');
+            if (!this.m_currentFreeAgentAlert) this.m_currentFreeAgentAlert = this.m_alertHandler.raiseAlert(AlertLevel.warning, 'Not enough agents available!', 'There are not enough phone agents free to take calls. Please get some people on the phones');
         } else if (this.m_currentFreeAgentAlert) {
             this.m_currentFreeAgentAlert.clear();
-            this.m_currentFreeAgentAlert = null;
         }
     }
 
     handleQueueAlerts() {
-        if (this.m_currentQueueAlert) if (this.m_currentQueueAlert.isCleared()) this.m_currentQueueAlert = null;
-
         if (this.m_queueNum > this.QUEUE_THRESHOLD) {
             if (!this.m_currentQueueAlert) {
                 this.m_currentQueueAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, `${this.m_queueNum} calls in queue!`, 'Please get some people on the phones');
@@ -88,9 +88,17 @@ export default class MitelHandler extends Handler {
     }
 
     handleAlerts() {
-        this.handleAgentAlerts();
-        this.handleFreeAlerts();
-        this.handleQueueAlerts();
+        // Forget cleared alerts
+        if (this.m_currentQueueAlert) if (this.m_currentQueueAlert.isCleared()) this.m_currentQueueAlert = null;
+        if (this.m_currentOnlineAgentAlert) if (this.m_currentOnlineAgentAlert.isCleared()) this.m_currentOnlineAgentAlert = null;
+        if (this.m_currentFreeAgentAlert) if (this.m_currentFreeAgentAlert.isCleared()) this.m_currentFreeAgentAlert = null;
+
+        if (this.m_hoursHandler.isOpen() && !this.m_hoursHandler.isClosingTime()) {
+            this.handleAgentAlerts();
+            // Number of logged in agents is more important than number free, so only check if needed
+            if (!this.m_currentOnlineAgentAlert) this.handleFreeAlerts();
+            this.handleQueueAlerts();
+        }
     }
 
     update() {

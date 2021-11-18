@@ -2,6 +2,7 @@ import { app, BrowserWindow } from 'electron';
 
 import Handler from './util/handlers/handler';
 import AlertHandler from './util/handlers/alerthandler';
+import HoursHanlder from './util/handlers/hourshandler';
 import MitelHandler from './util/handlers/mitelhandler';
 import SlackHandler from './util/handlers/slackhandler';
 import WindowHandler from './util/handlers/windowhandler';
@@ -9,6 +10,10 @@ import WindowHandler from './util/handlers/windowhandler';
 //
 // Tunables
 //
+
+// Opening/Closing
+const OPENING_WINDOW = 15; // Show opening message for 15 min after open
+const CLOSING_WINDOW = 10; // Show closing message for 10 min before close
 
 // Mitel
 const ONLINE_AGENT_MINIMUM = 2;
@@ -38,14 +43,17 @@ const setup = false;
 // Alert Handler
 const alertHandler = new AlertHandler();
 
+// Hours Handler
+const hoursHandler = new HoursHanlder(OPENING_WINDOW, CLOSING_WINDOW);
+
 // Mitel Handler
-const mitelHandler = new MitelHandler(alertHandler, ONLINE_AGENT_MINIMUM, FREE_AGENT_MINIMUM, CALL_QUEUE_THRESHOLD);
+const mitelHandler = new MitelHandler(alertHandler, hoursHandler, ONLINE_AGENT_MINIMUM, FREE_AGENT_MINIMUM, CALL_QUEUE_THRESHOLD);
 
 // Slack Handler
 // const slackHandler = new SlackHandler(alertHandler, SLACK_TOKEN, SLACK_INCIDENT_CHANNEL); // commented out until we get a token
 
 // Window Handler
-const windowHandler = new WindowHandler(alertHandler, urls);
+const windowHandler = new WindowHandler(alertHandler, hoursHandler, urls);
 
 // Combine handlers
 const handlers: Handler[] = [mitelHandler, alertHandler, windowHandler];

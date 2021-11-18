@@ -1,8 +1,9 @@
 import { BrowserWindow } from 'electron';
 import * as path from 'path';
 
-import AlertHandler from './alerthandler';
 import Handler from './handler';
+import AlertHandler from './alerthandler';
+import HoursHandler from './hourshandler';
 import { Alert } from '../alert';
 
 enum DashState {
@@ -15,6 +16,7 @@ enum DashState {
 
 export default class WindowHandler extends Handler {
     private m_alertHandler: AlertHandler;
+    private m_hoursHandler: HoursHandler;
     private m_mainWindow: BrowserWindow;
     private m_urls: string[];
     private m_currentState: DashState;
@@ -22,9 +24,10 @@ export default class WindowHandler extends Handler {
     private m_urlCount;
     private m_prevAlert: Alert;
 
-    constructor(alertHandler: AlertHandler, urls: string[]) {
+    constructor(alertHandler: AlertHandler, hoursHandler: HoursHandler, urls: string[]) {
         super();
         this.m_alertHandler = alertHandler;
+        this.m_hoursHandler = hoursHandler;
         this.m_urls = urls;
         this.m_currentState = DashState.none;
         this.m_prevState = DashState.none;
@@ -49,15 +52,13 @@ export default class WindowHandler extends Handler {
 
     update() {
         // Set state accordingly for opening/closing/alert/loop
-        const minute = (new Date()).getMinutes();
-        const hour = (new Date()).getHours();
         const currentAlert = this.m_alertHandler.getCurrentAlert();
 
         if (currentAlert) {
             this.m_currentState = DashState.alert;
-        } else if (hour === 8 && minute < 15) {
+        } else if (this.m_hoursHandler.isOpeningTime()) {
             this.m_currentState = DashState.opening;
-        } else if (hour === 16 && minute > 50) {
+        } else if (this.m_hoursHandler.isClosingTime()) {
             this.m_currentState = DashState.closing;
         } else {
             this.m_currentState = DashState.loop;
