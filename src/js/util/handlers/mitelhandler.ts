@@ -59,7 +59,7 @@ export default class MitelHandler extends Handler {
     }
 
     handleAgentAlerts() {
-        if (this.m_onlineAgentNum <= this.ONLINE_AGENT_MINIMUM) {
+        if (this.m_onlineAgentNum < this.ONLINE_AGENT_MINIMUM) {
             if (!this.m_currentOnlineAgentAlert) this.m_currentOnlineAgentAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, 'Not enough agents logged in!', 'There are not enough phone agents logged in. Please get some people on the phones');
         } else if (this.m_currentOnlineAgentAlert) {
             this.m_currentOnlineAgentAlert.clear();
@@ -67,7 +67,7 @@ export default class MitelHandler extends Handler {
     }
 
     handleFreeAlerts() {
-        if (this.m_freeAgentNum <= this.FREE_AGENT_MINIMUM) {
+        if (this.m_freeAgentNum < this.FREE_AGENT_MINIMUM) {
             if (!this.m_currentFreeAgentAlert) this.m_currentFreeAgentAlert = this.m_alertHandler.raiseAlert(AlertLevel.warning, 'Not enough agents available!', 'There are not enough phone agents free to take calls. Please get some people on the phones');
         } else if (this.m_currentFreeAgentAlert) {
             this.m_currentFreeAgentAlert.clear();
