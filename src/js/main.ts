@@ -31,10 +31,12 @@ const urls = [
     'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
 ];
 
+let setupUrl;
+
 // To setup JIRA or Aruba, set setup to true and uncomment the respective choice
 const setup = false;
-// windowHandler.getWindow().loadURL('https://dashboard.capenetworks.com'); // Aruba
-// windowHandler.getWindow().loadURL('https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190'); // JIRA
+// setupUrl = 'https://dashboard.capenetworks.com'; // Aruba
+// setupUrl = 'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190'; // JIRA
 
 //
 // Handler setup
@@ -73,7 +75,7 @@ app.on('ready', () => {
         setInterval(() => {
             handlers.forEach((handler) => handler.update());
         }, 10000); // Repeat every 10 seconds
-    }
+    } else windowHandler.getWindow().loadURL(setupUrl);
 
     app.on('activate', () => {
         // On macOS it's common to re-create a window in the app when the

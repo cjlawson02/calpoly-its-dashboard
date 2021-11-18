@@ -4,6 +4,8 @@
 
 This application is used on a semi-headless Mac Mini (running Ubuntu) connected to 2 mirrored Thunderbolt displays at the Service Desk.
 
+![Example Application View](https://github.com/Chris2fourlaw/calpoly-its-dashboard/blob/main/example.gif)
+
 ## Features
 - Cycling dashboards (between Mitel Status, Aruba Dashboard, and a JSM Dashboard)
 - Auto display on/off at open/close times (via Cronjob using [displayctl.sh](https://github.com/Chris2fourlaw/calpoly-its-dashboard/blob/main/scripts/displayctl.sh))
