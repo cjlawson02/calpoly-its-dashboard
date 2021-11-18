@@ -56,7 +56,7 @@ const mitelHandler = new MitelHandler(alertHandler, hoursHandler, ONLINE_AGENT_M
 const windowHandler = new WindowHandler(alertHandler, hoursHandler, urls);
 
 // Combine handlers
-const handlers: Handler[] = [mitelHandler, alertHandler, windowHandler];
+const handlers: Handler[] = [hoursHandler, mitelHandler, alertHandler, windowHandler];
 
 //
 // Electron stuff
