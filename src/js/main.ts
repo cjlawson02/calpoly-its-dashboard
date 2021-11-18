@@ -17,7 +17,6 @@ const CLOSING_WINDOW = 10; // Show closing message for 10 min before close
 
 // Mitel
 const ONLINE_AGENT_MINIMUM = 2;
-const FREE_AGENT_MINIMUM = 1;
 const CALL_QUEUE_THRESHOLD = 2;
 
 // Slack
@@ -49,7 +48,7 @@ const alertHandler = new AlertHandler();
 const hoursHandler = new HoursHanlder(OPENING_WINDOW, CLOSING_WINDOW);
 
 // Mitel Handler
-const mitelHandler = new MitelHandler(alertHandler, hoursHandler, ONLINE_AGENT_MINIMUM, FREE_AGENT_MINIMUM, CALL_QUEUE_THRESHOLD);
+const mitelHandler = new MitelHandler(alertHandler, hoursHandler, ONLINE_AGENT_MINIMUM, CALL_QUEUE_THRESHOLD);
 
 // Slack Handler
 // const slackHandler = new SlackHandler(alertHandler, SLACK_TOKEN, SLACK_INCIDENT_CHANNEL); // commented out until we get a token
