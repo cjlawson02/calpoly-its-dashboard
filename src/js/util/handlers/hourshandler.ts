@@ -18,16 +18,16 @@ export default class HoursHandler extends Handler {
 
     private updateHours() {
         switch (this.m_date.getDay()) {
-        case 0:
-            this.m_openHour = 10;
-            this.m_closeHour = 16;
-            break;
-        case 6:
-            break;
-        default:
-            this.m_openHour = 8;
-            this.m_closeHour = 17;
-            break;
+            case 0:
+                this.m_openHour = 10;
+                this.m_closeHour = 16;
+                break;
+            case 6:
+                break;
+            default:
+                this.m_openHour = 8;
+                this.m_closeHour = 17;
+                break;
         }
     }
 
@@ -63,7 +63,7 @@ export default class HoursHandler extends Handler {
     }
 
     isClosingTime() {
-        return (this.m_date.getHours() === this.getCloseHour() && this.m_date.getMinutes() > (60 - this.CLOSING_WINDOW));
+        return (this.m_date.getHours() === this.getCloseHour() - 1 && this.m_date.getMinutes() > (60 - this.CLOSING_WINDOW));
     }
 
     update() {
