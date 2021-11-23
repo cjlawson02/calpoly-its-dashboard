@@ -15,7 +15,8 @@
         "sourceType": "module"
     },
     "plugins": [
-        "@typescript-eslint"
+        "@typescript-eslint",
+        "eslint-plugin-tsdoc"
     ],
     "rules": {
         "indent": [
@@ -27,6 +28,7 @@
         "@typescript-eslint/no-unused-vars": "error",
         "no-shadow": "off",
         "@typescript-eslint/no-shadow": "error",
+        "tsdoc/syntax": "warn",
         "import/extensions": [
             "error",
             "ignorePackages",

@@ -1,16 +1,23 @@
 import { WebClient } from '@slack/web-api';
+import { Message } from '@slack/web-api/dist/response/ConversationsHistoryResponse';
 import { AlertLevel } from '../alert';
 import AlertHandler from './alerthandler';
 import Handler from './handler';
 
-export default class SlackHandler extends Handler {
+/** Handler for Slack Monitoring */
+export default class SlackHandler implements Handler {
     private m_alertHandler: AlertHandler;
     private m_client: WebClient;
     private m_channelID: string;
     private m_prevMessageText: string;
 
+    /**
+     * Create the Slack handler
+     * @param alertHandler - The alert handler
+     * @param token - The Slack API token
+     * @param channelID - The Slack channel ID to watch
+     */
     constructor(alertHandler: AlertHandler, token: string, channelID: string) {
-        super();
         this.m_alertHandler = alertHandler;
         this.m_client = new WebClient(token);
         this.m_channelID = channelID;
@@ -19,7 +26,10 @@ export default class SlackHandler extends Handler {
         });
     }
 
-    // Find conversation ID using the conversations.list method
+    /**
+     * Find conversation ID using the conversations.list method
+     * @param name - The channel name to find
+     */
     async findConversation(name: string) {
         try {
             // Call the conversations.list method using the built-in WebClient
@@ -38,6 +48,11 @@ export default class SlackHandler extends Handler {
         }
     }
 
+    /**
+     * Get the latest message in a Slack channel
+     * @param channelId - The Slack channel ID
+     * @returns An array of size 1 containing the latest Slack message in the channel
+     */
     async getLatestMessage(channelId: string) {
         // Store conversation history
         let conversationHistory;
@@ -60,7 +75,7 @@ export default class SlackHandler extends Handler {
         return conversationHistory;
     }
 
-    update() {
+    async update() {
         this.getLatestMessage(this.m_channelID).then((response) => {
             const responseText: string = response.messages[0].text;
             if (responseText !== this.m_prevMessageText) {

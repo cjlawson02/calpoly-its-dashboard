@@ -13,8 +13,8 @@ enum DashState {
     alert,
     none
 }
-
-export default class WindowHandler extends Handler {
+/** Handler for the Electron Window */
+export default class WindowHandler implements Handler {
     private m_alertHandler: AlertHandler;
     private m_hoursHandler: HoursHandler;
     private m_mainWindow: BrowserWindow;
@@ -24,8 +24,13 @@ export default class WindowHandler extends Handler {
     private m_urlCount;
     private m_prevAlert: Alert;
 
+    /**
+     * Create the window handler
+     * @param alertHandler - The alert handler
+     * @param hoursHandler - The hours handler
+     * @param urls - An array of URLs to cycle through on the dashboard
+     */
     constructor(alertHandler: AlertHandler, hoursHandler: HoursHandler, urls: string[]) {
-        super();
         this.m_alertHandler = alertHandler;
         this.m_hoursHandler = hoursHandler;
         this.m_urls = urls;
@@ -34,6 +39,7 @@ export default class WindowHandler extends Handler {
         this.m_urlCount = 0;
     }
 
+    /** Creates the main Electron window */
     async createWindow() {
         // Create the browser window.
         this.m_mainWindow = new BrowserWindow({
@@ -46,11 +52,15 @@ export default class WindowHandler extends Handler {
         });
     }
 
+    /**
+     * Get the main Electron window
+     * @returns The generated browser window
+     */
     getWindow() {
         return this.m_mainWindow;
     }
 
-    update() {
+    async update() {
         // Set state accordingly for opening/closing/alert/loop
         const currentAlert = this.m_alertHandler.getCurrentAlert();
 
