@@ -13,9 +13,10 @@ This application is used on a semi-headless Mac Mini (running Ubuntu) connected 
 - Custom Service Desk opening/closing messages including daily checklists
 - Alert pop-ups
   - Critical phone service issues (lack of agents logged in/available, high queue)
+  - Incident alerts through monitoring of #incidents Slack channel
+  - Announcments through the Slack bot's DMs
 
 ## Future Features
-- Alert pop-up for incident alerts through monitoring of #incidents Slack channel
 - Alert pop-up for spike in recent tickets compared to baseline
 - Better initial setup
   - Check if logged into Jira/Aruba before cycling through status

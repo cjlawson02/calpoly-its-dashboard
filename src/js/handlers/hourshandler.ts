@@ -101,8 +101,8 @@ export default class HoursHandler implements Handler {
         return (this.m_date.getHours() === this.getCloseHour() - 1 && this.m_date.getMinutes() > (60 - this.CLOSING_WINDOW));
     }
 
-    async update() {
-        this.m_date = new Date();
+    async update(date: Date) {
+        this.m_date = date;
         this.updateHours();
     }
 }

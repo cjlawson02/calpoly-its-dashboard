@@ -16,6 +16,7 @@ export class Alert {
     private m_level: AlertLevel;
     private m_title: String;
     private m_description: String;
+    private m_timeout: number;
     private m_cleared: boolean;
     private m_timestamp: Date;
 
@@ -24,11 +25,13 @@ export class Alert {
      * @param level - The level of the alert
      * @param title - The title of the issue
      * @param description - The description of the issue
+     * @param timeout - The timeout period of the alert in seconds
      */
-    constructor(level: AlertLevel, title: String, description: String) {
+    constructor(level: AlertLevel, title: String, description: String, timeout: number) {
         this.m_level = level;
         this.m_title = title;
         this.m_description = description;
+        this.m_timeout = timeout;
         this.m_cleared = false;
         this.m_timestamp = new Date();
     }
@@ -46,10 +49,16 @@ export class Alert {
     public getTitle() { return this.m_title; }
 
     /**
-     * Get the alert's title
+     * Get the alert's description
      * @returns The description of the alert
      */
     public getDescription() { return this.m_description; }
+
+    /**
+     * Get the alert's timeout period
+     * @returns The timeout of the alert in milliseconds
+     */
+    public getTimeout() { return this.m_timeout; }
 
     /**
      * Get the alert's timestamp

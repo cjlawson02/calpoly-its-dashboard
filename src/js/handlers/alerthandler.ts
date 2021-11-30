@@ -1,6 +1,6 @@
 import { ipcMain } from 'electron';
 import PriorityQueue from 'ts-priority-queue';
-import { Alert, AlertLevel } from '../alert';
+import { Alert, AlertLevel } from '../util/alert';
 import Handler from './handler';
 
 /** A handler for the alert system */
@@ -40,11 +40,22 @@ export default class AlertHandler implements Handler {
     });
 
     /**
-     * Raise an alert and add it to the priority queue
-     * @param name - The channel name to find
+     * Raise a new alert
+     * @param level - The level of severity
+     * @param title - The title for the alert
+     * @param description - The description for the alert
+     * @param timeout - The timeout period in seconds
+     * @returns The newly created alert
      */
-    raiseAlert(level: AlertLevel, title: String, description: String): Alert {
-        const alert = new Alert(level, title, description);
+    raiseAlert(level: AlertLevel, title: String, description: String, timeout?: number): Alert {
+        let alert: Alert;
+
+        if (timeout) {
+            alert = new Alert(level, title, description, timeout * 1000);
+        } else {
+            alert = new Alert(level, title, description, null);
+        }
+
         this.m_alerts.queue(alert);
         return alert;
     }
@@ -66,9 +77,16 @@ export default class AlertHandler implements Handler {
         return null;
     }
 
-    async update() {
-        if (this.getNumAlerts() > 0) {
-            if (this.m_alerts.peek().isCleared()) {
+    async update(date: Date) {
+        if (this.getCurrentAlert()) {
+            const alert = this.getCurrentAlert();
+            const timeoutTimestamp = alert.getTimestamp().getTime() + alert.getTimeout();
+
+            if (date.getTime() > timeoutTimestamp && alert.getTimeout()) {
+                alert.clear();
+            }
+
+            if (alert.isCleared()) {
                 this.m_alerts.dequeue();
             }
         }

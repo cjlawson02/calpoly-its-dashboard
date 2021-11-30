@@ -1,7 +1,7 @@
 import request from 'request';
 
 import Handler from './handler';
-import { Alert, AlertLevel } from '../alert';
+import { Alert, AlertLevel } from '../util/alert';
 import AlertHandler from './alerthandler';
 import HoursHandler from './hourshandler';
 
@@ -9,6 +9,9 @@ import HoursHandler from './hourshandler';
 export default class MitelHandler implements Handler {
     private m_alertHandler: AlertHandler;
     private m_hoursHandler: HoursHandler;
+
+    private m_prevMitelDate: Date;
+    private MITEL_UPDATE_TIME: number;
 
     private ONLINE_AGENT_MINIMUM: number;
     private m_onlineAgentNum: number;
@@ -25,10 +28,14 @@ export default class MitelHandler implements Handler {
      * @param hoursHandler - The hours handler
      * @param agentMinimum - The minimum amount of agents needed during open hours
      * @param queueThreshold - The maximum amound of calls allowed in the queue
+     * @param mitelTime - How often to check the Mitel dashboard data in seconds
      */
-    constructor(alertHandler: AlertHandler, hoursHandler: HoursHandler, agentMinimum: number, queueThreshold: number) {
+    constructor(alertHandler: AlertHandler, hoursHandler: HoursHandler, mitelUpdateTime: number, agentMinimum: number, queueThreshold: number) {
         this.m_alertHandler = alertHandler;
         this.m_hoursHandler = hoursHandler;
+
+        this.m_prevMitelDate = new Date();
+        this.MITEL_UPDATE_TIME = mitelUpdateTime;
 
         this.ONLINE_AGENT_MINIMUM = agentMinimum;
         this.QUEUE_THRESHOLD = queueThreshold;
@@ -65,7 +72,7 @@ export default class MitelHandler implements Handler {
     }
 
     /** Handle alerts for the number of agents online */
-    private handleAgentAlerts() {
+    private async handleAgentAlerts() {
         if (this.m_onlineAgentNum < this.ONLINE_AGENT_MINIMUM) {
             if (!this.m_currentOnlineAgentAlert) this.m_currentOnlineAgentAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, 'Not enough agents logged in!', 'There are not enough phone agents logged in. Please get some people on the phones');
         } else if (this.m_currentOnlineAgentAlert) {
@@ -74,7 +81,7 @@ export default class MitelHandler implements Handler {
     }
 
     /** Handle alerts for the number of calls in the queue */
-    private handleQueueAlerts() {
+    private async handleQueueAlerts() {
         if (this.m_queueNum > this.QUEUE_THRESHOLD) {
             if (!this.m_currentQueueAlert) {
                 this.m_currentQueueAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, `${this.m_queueNum} calls in queue!`, 'Please get some people on the phones');
@@ -99,8 +106,12 @@ export default class MitelHandler implements Handler {
         }
     }
 
-    async update() {
-        this.updateMitelData();
+    async update(date: Date) {
+        if (date.getTime() - this.MITEL_UPDATE_TIME * 1000 > this.m_prevMitelDate.getTime()) {
+            this.updateMitelData();
+            this.m_prevMitelDate = date;
+        }
+
         this.handleAlerts();
     }
 }
