@@ -18,8 +18,9 @@ export default class WindowHandler implements Handler {
     private m_alertHandler: AlertHandler;
     private m_hoursHandler: HoursHandler;
     private m_mainWindow: BrowserWindow;
-    private m_urls: string[];
+    private URLS: string[];
     private WINDOW_UPDATE_TIME: number;
+    private KIOSK_MODE: boolean;
     private m_prevLoopDate: Date;
     private m_currentState: DashState;
     private m_prevState: DashState;
@@ -33,11 +34,14 @@ export default class WindowHandler implements Handler {
      * @param urls - An array of URLs to cycle through on the dashboard
      * @param loopTime - The time in seconds between URL changes
      */
-    constructor(alertHandler: AlertHandler, hoursHandler: HoursHandler, windowUpdateTime: number, urls: string[]) {
+    constructor(alertHandler: AlertHandler, hoursHandler: HoursHandler, windowUpdateTime: number, kioskMode: boolean, urls: string[]) {
         this.m_alertHandler = alertHandler;
         this.m_hoursHandler = hoursHandler;
-        this.m_urls = urls;
+
         this.WINDOW_UPDATE_TIME = windowUpdateTime;
+        this.KIOSK_MODE = kioskMode;
+        this.URLS = urls;
+
         this.m_prevLoopDate = new Date();
         this.m_currentState = DashState.none;
         this.m_prevState = DashState.none;
@@ -48,14 +52,14 @@ export default class WindowHandler implements Handler {
     async createWindow() {
         // Create the browser window.
         this.m_mainWindow = new BrowserWindow({
-            kiosk: false,
+            kiosk: this.KIOSK_MODE,
             webPreferences: {
                 nodeIntegration: false, // is default value after Electron v5
                 contextIsolation: true, // protect against prototype pollution
                 preload: path.join(__dirname, '../preload.js'),
             },
         });
-        this.m_mainWindow.loadURL(this.m_urls[this.m_urlCount]);
+        this.m_mainWindow.loadURL(this.URLS[this.m_urlCount]);
     }
 
     /**
@@ -82,30 +86,30 @@ export default class WindowHandler implements Handler {
 
         // Choose what to diplay
         switch (this.m_currentState) {
-        case DashState.opening:
-            if (this.m_prevState !== DashState.opening) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/open.html'));
-            this.m_prevState = DashState.opening;
-            break;
-        case DashState.closing:
-            if (this.m_prevState !== DashState.closing) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/close.html'));
-            this.m_prevState = DashState.closing;
-            break;
-        case DashState.loop:
-            if (date.getTime() - this.WINDOW_UPDATE_TIME * 1000 > this.m_prevLoopDate.getTime()) {
-                this.m_urlCount += 1;
-                if (this.m_urlCount > this.m_urls.length - 1) this.m_urlCount = 0;
-                this.m_mainWindow.loadURL(this.m_urls[this.m_urlCount]);
-                this.m_prevLoopDate = date;
-            }
-            this.m_prevState = DashState.loop;
-            break;
-        case DashState.alert:
-            if (this.m_prevAlert !== currentAlert) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/alert.html'));
-            this.m_prevState = DashState.alert;
-            this.m_prevAlert = currentAlert;
-            break;
-        default:
-            break;
+            case DashState.opening:
+                if (this.m_prevState !== DashState.opening) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/open.html'));
+                this.m_prevState = DashState.opening;
+                break;
+            case DashState.closing:
+                if (this.m_prevState !== DashState.closing) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/close.html'));
+                this.m_prevState = DashState.closing;
+                break;
+            case DashState.loop:
+                if (date.getTime() - this.WINDOW_UPDATE_TIME * 1000 > this.m_prevLoopDate.getTime()) {
+                    this.m_urlCount += 1;
+                    if (this.m_urlCount > this.URLS.length - 1) this.m_urlCount = 0;
+                    this.m_mainWindow.loadURL(this.URLS[this.m_urlCount]);
+                    this.m_prevLoopDate = date;
+                }
+                this.m_prevState = DashState.loop;
+                break;
+            case DashState.alert:
+                if (this.m_prevAlert !== currentAlert) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/alert.html'));
+                this.m_prevState = DashState.alert;
+                this.m_prevAlert = currentAlert;
+                break;
+            default:
+                break;
         }
     }
 }

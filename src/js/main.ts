@@ -39,6 +39,7 @@ const URLS = [
     'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
 ];
 const WINDOW_UPDATE_TIME = 10; // How often the dashboard will change the URL in seconds
+const KIOSK_MODE = (process.env.KIOSK_MODE === 'true');
 
 //
 // Handler setup
@@ -57,7 +58,7 @@ const mitelHandler = new MitelHandler(alertHandler, hoursHandler, MITEL_UPDATE_T
 const slackHandler = new SlackHandler(alertHandler, SLACK_UPDATE_TIME, SLACK_TOKEN, SLACK_INCIDENT_CHANNEL, SLACK_DR_PEOPLESOFT_ID, SLACK_SDLEADS_GROUPID, SLACK_INCIDENT_TIMEOUT, SLACK_DM_TIMEOUT);
 
 // Window Handler
-const windowHandler = new WindowHandler(alertHandler, hoursHandler, WINDOW_UPDATE_TIME, URLS);
+const windowHandler = new WindowHandler(alertHandler, hoursHandler, WINDOW_UPDATE_TIME, KIOSK_MODE, URLS);
 
 // Combine handlers
 const handlers: Handler[] = [hoursHandler, mitelHandler, slackHandler, alertHandler, windowHandler];
