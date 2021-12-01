@@ -48,7 +48,7 @@ export default class WindowHandler implements Handler {
     async createWindow() {
         // Create the browser window.
         this.m_mainWindow = new BrowserWindow({
-            kiosk: true,
+            kiosk: false,
             webPreferences: {
                 nodeIntegration: false, // is default value after Electron v5
                 contextIsolation: true, // protect against prototype pollution
@@ -75,37 +75,37 @@ export default class WindowHandler implements Handler {
         } else if (this.m_hoursHandler.isOpeningTime()) {
             this.m_currentState = DashState.opening;
         } else if (this.m_hoursHandler.isClosingTime()) {
-            this.m_currentState = DashState.closing;
+            // this.m_currentState = DashState.closing;
         } else {
             this.m_currentState = DashState.loop;
         }
 
         // Choose what to diplay
         switch (this.m_currentState) {
-            case DashState.opening:
-                if (this.m_prevState !== DashState.opening) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/open.html'));
-                this.m_prevState = DashState.opening;
-                break;
-            case DashState.closing:
-                if (this.m_prevState !== DashState.closing) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/close.html'));
-                this.m_prevState = DashState.closing;
-                break;
-            case DashState.loop:
-                if (date.getTime() - this.WINDOW_UPDATE_TIME * 1000 > this.m_prevLoopDate.getTime()) {
-                    this.m_urlCount += 1;
-                    if (this.m_urlCount > this.m_urls.length - 1) this.m_urlCount = 0;
-                    this.m_mainWindow.loadURL(this.m_urls[this.m_urlCount]);
-                    this.m_prevLoopDate = date;
-                }
-                this.m_prevState = DashState.loop;
-                break;
-            case DashState.alert:
-                if (this.m_prevAlert !== currentAlert) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/alert.html'));
-                this.m_prevState = DashState.alert;
-                this.m_prevAlert = currentAlert;
-                break;
-            default:
-                break;
+        case DashState.opening:
+            if (this.m_prevState !== DashState.opening) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/open.html'));
+            this.m_prevState = DashState.opening;
+            break;
+        case DashState.closing:
+            if (this.m_prevState !== DashState.closing) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/close.html'));
+            this.m_prevState = DashState.closing;
+            break;
+        case DashState.loop:
+            if (date.getTime() - this.WINDOW_UPDATE_TIME * 1000 > this.m_prevLoopDate.getTime()) {
+                this.m_urlCount += 1;
+                if (this.m_urlCount > this.m_urls.length - 1) this.m_urlCount = 0;
+                this.m_mainWindow.loadURL(this.m_urls[this.m_urlCount]);
+                this.m_prevLoopDate = date;
+            }
+            this.m_prevState = DashState.loop;
+            break;
+        case DashState.alert:
+            if (this.m_prevAlert !== currentAlert) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/alert.html'));
+            this.m_prevState = DashState.alert;
+            this.m_prevAlert = currentAlert;
+            break;
+        default:
+            break;
         }
     }
 }

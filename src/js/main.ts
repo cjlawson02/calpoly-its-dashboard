@@ -40,13 +40,6 @@ const URLS = [
 ];
 const WINDOW_UPDATE_TIME = 10; // How often the dashboard will change the URL in seconds
 
-let setupUrl;
-
-// To setup JIRA or Aruba, set setup to true and uncomment the respective choice
-const setup = false;
-// setupUrl = 'https://dashboard.capenetworks.com'; // Aruba
-// setupUrl = 'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190'; // JIRA
-
 //
 // Handler setup
 //
@@ -91,13 +84,31 @@ app.on('ready', () => {
         if (BrowserWindow.getAllWindows().length === 0) windowHandler.createWindow();
     });
 
-    if (!setup || !setupUrl) {
-        setInterval(() => {
+    let setup = false;
+    let setupUrl = '';
+    let done = false;
+    setInterval(() => {
+        const currentUrl = windowHandler.getWindow().webContents.getURL();
+        if (!setup || !setupUrl) {
             updateHandlers(new Date());
-        }, 1);
-    } else {
-        windowHandler.getWindow().loadURL(setupUrl);
-    }
+
+            if (currentUrl.includes('login') || currentUrl.includes('idp')) {
+                setup = true;
+                setupUrl = currentUrl;
+            }
+        } else {
+            if (!done) {
+                windowHandler.getWindow().loadURL(setupUrl);
+                done = true;
+            }
+
+            if (!currentUrl.includes('login') && !currentUrl.includes('idp') && done) {
+                setup = false;
+                setupUrl = '';
+                done = false;
+            }
+        }
+    }, 1);
 });
 
 // Quit when all windows are closed, except on macOS. There, it's common
