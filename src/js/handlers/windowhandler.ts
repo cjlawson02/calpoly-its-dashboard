@@ -5,14 +5,17 @@ import Handler from './handler';
 import AlertHandler from './alerthandler';
 import HoursHandler from './hourshandler';
 import { Alert } from '../util/alert';
+import { MS_PER_SECOND } from '../util/constants';
 
 enum DashState {
     opening,
     closing,
+    setup,
     loop,
     alert,
     none
 }
+
 /** Handler for the Electron Window */
 export default class WindowHandler implements Handler {
     private m_alertHandler: AlertHandler;
@@ -73,13 +76,16 @@ export default class WindowHandler implements Handler {
     async update(date: Date) {
         // Set state accordingly for opening/closing/alert/loop
         const currentAlert = this.m_alertHandler.getCurrentAlert();
+        const currentUrl = this.getWindow().webContents.getURL();
 
         if (currentAlert) {
             this.m_currentState = DashState.alert;
         } else if (this.m_hoursHandler.isOpeningTime()) {
             this.m_currentState = DashState.opening;
         } else if (this.m_hoursHandler.isClosingTime()) {
-            // this.m_currentState = DashState.closing;
+            this.m_currentState = DashState.closing;
+        } else if (currentUrl.includes('login') || currentUrl.includes('idp')) {
+            this.m_currentState = DashState.setup;
         } else {
             this.m_currentState = DashState.loop;
         }
@@ -94,8 +100,12 @@ export default class WindowHandler implements Handler {
                 if (this.m_prevState !== DashState.closing) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/close.html'));
                 this.m_prevState = DashState.closing;
                 break;
+            case DashState.setup:
+                if (this.m_prevState !== DashState.setup) this.m_mainWindow.loadURL(currentUrl);
+                this.m_prevState = DashState.setup;
+                break;
             case DashState.loop:
-                if (date.getTime() - this.WINDOW_UPDATE_TIME * 1000 > this.m_prevLoopDate.getTime()) {
+                if (date.getTime() - this.WINDOW_UPDATE_TIME * MS_PER_SECOND > this.m_prevLoopDate.getTime()) {
                     this.m_urlCount += 1;
                     if (this.m_urlCount > this.URLS.length - 1) this.m_urlCount = 0;
                     this.m_mainWindow.loadURL(this.URLS[this.m_urlCount]);

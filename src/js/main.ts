@@ -24,7 +24,7 @@ const CALL_QUEUE_THRESHOLD = 2; // Maximum calls allowed in the queue, otherwise
 const MITEL_UPDATE_TIME = 1; // How often to update the Mitel data in seconds
 
 // Slack
-const SLACK_UPDATE_TIME = 8; // How often to update Slack data in seconds
+const SLACK_UPDATE_TIME = 10; // How often to update Slack data in seconds
 const { SLACK_TOKEN } = process.env; // Get the API token from the environment
 const SLACK_INCIDENT_CHANNEL = 'CM8KV8A1M'; // Monitor this channel for incident alerts
 const SLACK_DR_PEOPLESOFT_ID = 'UFP3Y0M17'; // Bot ID for the Dr. PeopleSoft bot
@@ -85,30 +85,8 @@ app.on('ready', () => {
         if (BrowserWindow.getAllWindows().length === 0) windowHandler.createWindow();
     });
 
-    let setup = false;
-    let setupUrl = '';
-    let done = false;
     setInterval(() => {
-        const currentUrl = windowHandler.getWindow().webContents.getURL();
-        if (!setup || !setupUrl) {
-            updateHandlers(new Date());
-
-            if (currentUrl.includes('login') || currentUrl.includes('idp')) {
-                setup = true;
-                setupUrl = currentUrl;
-            }
-        } else {
-            if (!done) {
-                windowHandler.getWindow().loadURL(setupUrl);
-                done = true;
-            }
-
-            if (!currentUrl.includes('login') && !currentUrl.includes('idp') && done) {
-                setup = false;
-                setupUrl = '';
-                done = false;
-            }
-        }
+        updateHandlers(new Date());
     }, 1);
 });
 

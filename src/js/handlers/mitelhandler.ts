@@ -4,6 +4,7 @@ import Handler from './handler';
 import { Alert, AlertLevel } from '../util/alert';
 import AlertHandler from './alerthandler';
 import HoursHandler from './hourshandler';
+import { MS_PER_SECOND } from '../util/constants';
 
 /** Handler for the Mitel phone stats */
 export default class MitelHandler implements Handler {
@@ -107,7 +108,7 @@ export default class MitelHandler implements Handler {
     }
 
     async update(date: Date) {
-        if (date.getTime() - this.MITEL_UPDATE_TIME * 1000 > this.m_prevMitelDate.getTime()) {
+        if (date.getTime() - this.MITEL_UPDATE_TIME * MS_PER_SECOND > this.m_prevMitelDate.getTime()) {
             this.updateMitelData();
             this.m_prevMitelDate = date;
         }
