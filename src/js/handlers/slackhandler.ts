@@ -47,21 +47,17 @@ export default class SlackHandler implements Handler {
         });
         this.INCIDENT_CHANNEL_ID = incidentChannelID;
         this.DR_PEOPLESOFT_ID = drPeopleSoftID;
-        this.getUserGroupList(allowedUserGroupID).then((result) => {
-            this.ALLOWED_USER_GROUP_LIST = result;
-        });
+        this.getUserGroupList(allowedUserGroupID).then((result) => { this.ALLOWED_USER_GROUP_LIST = result; });
         this.INCIDENT_TIMEOUT = incidentTimeout;
         this.DM_TIMEOUT = dmTimeout;
 
-        this.getLatestMessage(this.INCIDENT_CHANNEL_ID).then((result) => {
-            this.m_prevIncidentMessage = result;
-        });
+        this.getLatestMessage(this.INCIDENT_CHANNEL_ID).then((result) => { this.m_prevIncidentMessage = result; });
         this.m_imConversations = {};
 
         this.getImConversations().then((dmConvos) => {
             if (dmConvos) {
                 dmConvos.channels.forEach((channel) => {
-                    this.m_imConversations[channel.id] = this.getLatestMessage(channel.id);
+                    this.getLatestMessage(channel.id).then((message) => { this.m_imConversations[channel.id] = message; });
                 });
             }
         });
@@ -183,7 +179,7 @@ export default class SlackHandler implements Handler {
                 const message = await this.getLatestMessage(channel.id);
                 if (message) {
                     // Check if message is new and not from the bot
-                    if (this.m_imConversations[channel.id] !== message && message.user !== this.BOT_ID) {
+                    if (this.m_imConversations[channel.id].ts !== message.ts && message.user !== this.BOT_ID) {
                         // Check if the user is in the allowed usergroup
                         if (this.ALLOWED_USER_GROUP_LIST) {
                             if (this.ALLOWED_USER_GROUP_LIST.users.includes(message.user)) {
@@ -205,10 +201,10 @@ export default class SlackHandler implements Handler {
                                 this.sendMessage(channel.id, 'You are not permitted to publish messages to this dashboard.');
                             }
                         }
-
-                        // Update the latest message
-                        this.m_imConversations[channel.id] = message;
                     }
+
+                    // Update the latest message
+                    this.m_imConversations[channel.id] = message;
                 }
             });
         }
