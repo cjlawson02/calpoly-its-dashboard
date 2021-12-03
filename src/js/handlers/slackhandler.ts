@@ -2,7 +2,7 @@ import {
     UsergroupsUsersListResponse, WebClient,
 } from '@slack/web-api';
 import { Message } from '@slack/web-api/dist/response/ConversationsHistoryResponse';
-import { AlertLevel } from '../util/alert';
+import { Alert, AlertLevel } from '../util/alert';
 import { MS_PER_SECOND } from '../util/constants';
 import AlertHandler from './alerthandler';
 import Handler from './handler';
@@ -24,6 +24,7 @@ export default class SlackHandler implements Handler {
 
     private m_prevSlackDate: Date;
     private m_rateLimit: boolean;
+    private m_currentSlackAlert: Alert;
     private SLACK_UPDATE_TIME: number;
     private SLACK_RATE_TIMEOUT = 10;
 
@@ -67,6 +68,7 @@ export default class SlackHandler implements Handler {
 
         this.m_prevSlackDate = new Date();
         this.m_rateLimit = false;
+        this.m_currentSlackAlert = null;
         this.SLACK_UPDATE_TIME = slackUpdateTime;
     }
 
@@ -177,6 +179,7 @@ export default class SlackHandler implements Handler {
         const dmConvos = await this.getImConversations();
         if (dmConvos) {
             dmConvos.channels.forEach(async (channel) => {
+                // Get the latest message
                 const message = await this.getLatestMessage(channel.id);
                 if (message) {
                     // Check if message is new and not from the bot
@@ -184,8 +187,20 @@ export default class SlackHandler implements Handler {
                         // Check if the user is in the allowed usergroup
                         if (this.ALLOWED_USER_GROUP_LIST) {
                             if (this.ALLOWED_USER_GROUP_LIST.users.includes(message.user)) {
-                                this.m_alertHandler.raiseAlert(AlertLevel.info, message.text, `Posted by ${await this.getUserDisplayName(message.user)}`, this.DM_TIMEOUT);
-                                this.sendMessage(channel.id, `Message published! It will last for ${this.DM_TIMEOUT} seconds.`);
+                                // Clear the old alert if there was one
+                                if (this.m_currentSlackAlert) {
+                                    this.m_currentSlackAlert.clear();
+                                }
+
+                                // Create a new alert
+                                this.m_currentSlackAlert = this.m_alertHandler.raiseAlert(AlertLevel.info, message.text, `Posted by ${await this.getUserDisplayName(message.user)}`, this.DM_TIMEOUT);
+
+                                // React to message to show alert was made
+                                this.m_client.reactions.add({
+                                    channel: `${channel}`,
+                                    name: 'thumbsup',
+                                    timestamp: message.ts,
+                                });
                             } else {
                                 this.sendMessage(channel.id, 'You are not permitted to publish messages to this dashboard.');
                             }
@@ -200,14 +215,23 @@ export default class SlackHandler implements Handler {
     }
 
     async update(date: Date) {
+        // Update by default, handle rate limit issue if needed
         if (date.getTime() - this.SLACK_UPDATE_TIME * MS_PER_SECOND > this.m_prevSlackDate.getTime() && !this.m_rateLimit) {
             this.updateIncidents();
             this.updateDirectMessages();
             this.m_prevSlackDate = date;
         } else if (this.m_rateLimit) {
+            // Try again after SLACK_RATE_TIMEOUT amount of time
             if (date.getTime() - this.SLACK_RATE_TIMEOUT * MS_PER_SECOND > this.m_prevSlackDate.getTime()) {
                 this.m_rateLimit = false;
                 this.m_prevSlackDate = date;
+            }
+        }
+
+        // Remove current alert if cleared
+        if (this.m_currentSlackAlert) {
+            if (this.m_currentSlackAlert.isCleared()) {
+                this.m_currentSlackAlert = null;
             }
         }
     }
