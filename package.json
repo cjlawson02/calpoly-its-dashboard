@@ -32,7 +32,7 @@
   "dependencies": {
     "@slack/web-api": "^6.4.0",
     "dotenv": "^10.0.0",
-    "electron": "^16.0.0",
+    "electron": "^16.0.4",
     "request": "^2.88.2",
     "ts-priority-queue": "^0.1.1"
   }
