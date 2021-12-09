@@ -30,7 +30,7 @@
     "typescript": "^4.4.4"
   },
   "dependencies": {
-    "@slack/web-api": "^6.4.0",
+    "@slack/bolt": "^3.8.1",
     "dotenv": "^10.0.0",
     "electron": "^16.0.0",
     "request": "^2.88.2",

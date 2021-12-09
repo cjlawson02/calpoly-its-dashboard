@@ -1,111 +1,71 @@
-import {
-    UsergroupsUsersListResponse, WebClient,
-} from '@slack/web-api';
-import { Message } from '@slack/web-api/dist/response/ConversationsHistoryResponse';
+import { App } from '@slack/bolt';
 import { Alert, AlertLevel } from '../util/alert';
-import { MS_PER_SECOND } from '../util/constants';
 import AlertHandler from './alerthandler';
 import Handler from './handler';
 
 /** Handler for Slack Monitoring */
 export default class SlackHandler implements Handler {
     private m_alertHandler: AlertHandler;
-    private m_client: WebClient;
+    private m_bolt: App;
 
-    private BOT_ID: string;
     private INCIDENT_CHANNEL_ID: string;
     private DR_PEOPLESOFT_ID: string;
-    private ALLOWED_USER_GROUP_LIST: void | UsergroupsUsersListResponse;
+    private ALLOWED_USER_LIST: string[];
     private INCIDENT_TIMEOUT: number;
     private DM_TIMEOUT: number;
 
-    private m_prevIncidentMessage: Message;
-    private m_imConversations;
-
-    private m_prevSlackDate: Date;
-    private m_rateLimit: boolean;
     private m_currentSlackAlert: Alert;
-    private SLACK_UPDATE_TIME: number;
-    private SLACK_RATE_TIMEOUT = 10;
 
     /**
      * Create the Slack handler
      * @param alertHandler - The alert handler
-     * @param token - The Slack API token
+     * @param token - The Slack Bot API token
+     * @param appToken - The Slack App API token
      * @param incidentChannelID - The Slack incident channel ID to watch
      * @param drPeopleSoftID - The ID for the Dr. PeopleSoft bot
      * @param allowedUserGroupID - The group ID of users allowed to DM the bot for info alerts
      * @param incidentTimeout - The number of seconds that an incident alert will be displayed
      * @param dmTimeout - The number of seconds that a DM alert will be displayed
      */
-    constructor(alertHandler: AlertHandler, slackUpdateTime: number, token: string, incidentChannelID: string, drPeopleSoftID: string, allowedUserGroupID: string, incidentTimeout: number, dmTimeout: number) {
+    constructor(alertHandler: AlertHandler, token: string, appToken: string, incidentChannelID: string, drPeopleSoftID: string, allowedUserGroupID: string, incidentTimeout: number, dmTimeout: number) {
         this.m_alertHandler = alertHandler;
-        this.m_client = new WebClient(token, { rejectRateLimitedCalls: true, retryConfig: { retries: 0 } });
-
-        this.m_client.auth.test().then((res) => {
-            this.BOT_ID = res.user_id;
+        this.m_bolt = new App({
+            token,
+            appToken,
+            socketMode: true,
         });
+
+        (async () => {
+            await this.m_bolt.start();
+        })();
+
         this.INCIDENT_CHANNEL_ID = incidentChannelID;
         this.DR_PEOPLESOFT_ID = drPeopleSoftID;
-        this.getUserGroupList(allowedUserGroupID).then((result) => { this.ALLOWED_USER_GROUP_LIST = result; });
+
+        this.getUserGroupList(allowedUserGroupID).then((result) => {
+            if (result) {
+                this.ALLOWED_USER_LIST = result.users;
+            }
+        });
+
         this.INCIDENT_TIMEOUT = incidentTimeout;
         this.DM_TIMEOUT = dmTimeout;
 
-        this.getLatestMessage(this.INCIDENT_CHANNEL_ID).then((result) => { this.m_prevIncidentMessage = result; });
-        this.m_imConversations = {};
-
-        this.getImConversations().then((dmConvos) => {
-            if (dmConvos) {
-                dmConvos.channels.forEach((channel) => {
-                    this.getLatestMessage(channel.id).then((message) => { this.m_imConversations[channel.id] = message; });
-                });
-            }
-        });
-
-        this.m_prevSlackDate = new Date();
-        this.m_rateLimit = false;
         this.m_currentSlackAlert = null;
-        this.SLACK_UPDATE_TIME = slackUpdateTime;
-    }
 
-    /**
-     * Get the latest message in a Slack channel
-     * @param channelId - The Slack channel ID
-     * @returns An array of size 1 containing the latest Slack message in the channel
-     */
-    async getLatestMessage(channelId: string) {
-        const result = await this.m_client.conversations.history({
-            channel: channelId,
-            limit: 1,
-        }).catch((error) => {
-            if (error.code === 'slack_webapi_rate_limited_error') {
-                this.m_rateLimit = true;
-            } else {
-                console.error(error);
-            }
-        });
-
-        if (result) {
-            return result.messages[0];
-        }
-
-        return null;
-    }
-
-    /**
-     * Send a message to a given channel ID
-     * @param channelId - The channel ID to send the message to
-     * @param message - The message text
-     */
-    sendMessage(channelId: string, message: string) {
-        this.m_client.chat.postMessage({
-            channel: channelId,
-            attachments: [{ text: message }],
-        }).catch((error) => {
-            if (error.code === 'slack_webapi_rate_limited_error') {
-                this.m_rateLimit = true;
-            } else {
-                console.error(error);
+        this.m_bolt.message(async ({ event, say, logger }) => {
+            try {
+                if (event.channel_type === 'im') {
+                    if (!await this.handleIm(event)) {
+                        await say('You are not permitted to post alerts on this system.');
+                    }
+                } else if (event.channel_type === 'channel') {
+                    if (event.channel === this.INCIDENT_CHANNEL_ID) {
+                        await this.handleIncident(event);
+                    }
+                }
+            } catch (error) {
+                logger.error(error);
             }
         });
     }
@@ -115,14 +75,16 @@ export default class SlackHandler implements Handler {
      * @param userGroupID - The ID for the user group
      * @returns The user group list from Slack's API.
      */
-    getUserGroupList(userGroupID: string) {
-        return this.m_client.usergroups.users.list({ usergroup: userGroupID }).catch((error) => {
-            if (error.code === 'slack_webapi_rate_limited_error') {
-                this.m_rateLimit = true;
-            } else {
-                console.error(error);
-            }
+    async getUserGroupList(userGroupID: string) {
+        const result = await this.m_bolt.client.usergroups.users.list({ usergroup: userGroupID }).catch((error) => {
+            console.error(error);
         });
+
+        if (result) {
+            return result;
+        }
+
+        return null;
     }
 
     /**
@@ -131,12 +93,8 @@ export default class SlackHandler implements Handler {
      * @returns The display name of the user
      */
     async getUserDisplayName(userID: string) {
-        const result = await this.m_client.users.profile.get({ user: userID }).catch((error) => {
-            if (error.code === 'slack_webapi_rate_limited_error') {
-                this.m_rateLimit = true;
-            } else {
-                console.error(error);
-            }
+        const result = await this.m_bolt.client.users.profile.get({ user: userID }).catch((error) => {
+            console.error(error);
         });
 
         if (result) {
@@ -146,84 +104,56 @@ export default class SlackHandler implements Handler {
         return null;
     }
 
-    /**
-     * Get the direct message conversations
-     * @returns This Slack bot's direct message conversations
-     */
-    getImConversations() {
-        return this.m_client.users.conversations({ types: 'im' }).catch((error) => {
-            if (error.code === 'slack_webapi_rate_limited_error') {
-                this.m_rateLimit = true;
-            } else {
-                console.error(error);
-            }
-        });
-    }
-
     /** Check for new incident messages */
-    async updateIncidents() {
-        const message = await this.getLatestMessage(this.INCIDENT_CHANNEL_ID);
+    async handleIncident(event) {
+        if (event.user === this.DR_PEOPLESOFT_ID) {
+            this.m_alertHandler.raiseAlert(AlertLevel.warning, 'New Incident Raised!', event.text, this.INCIDENT_TIMEOUT);
 
-        if (message !== this.m_prevIncidentMessage && message.user === this.DR_PEOPLESOFT_ID) {
-            this.m_alertHandler.raiseAlert(AlertLevel.warning, 'New Incident Raised!', message.text, this.INCIDENT_TIMEOUT);
+            // React to message to show alert was made
+            await this.m_bolt.client.reactions.add({
+                channel: event.channel,
+                name: 'thumbsup',
+                timestamp: event.event_ts,
+            });
+
+            return true;
         }
-        this.m_prevIncidentMessage = message;
+
+        return false;
     }
 
     /** Cycle through open DMs and check for new messages. Publish alerts if user in usergroup */
-    async updateDirectMessages() {
-        const dmConvos = await this.getImConversations();
-        if (dmConvos) {
-            dmConvos.channels.forEach(async (channel) => {
-                // Get the latest message
-                const message = await this.getLatestMessage(channel.id);
-                if (message) {
-                    // Check if message is new and not from the bot
-                    if (this.m_imConversations[channel.id].ts !== message.ts && message.user !== this.BOT_ID) {
-                        // Check if the user is in the allowed usergroup
-                        if (this.ALLOWED_USER_GROUP_LIST) {
-                            if (this.ALLOWED_USER_GROUP_LIST.users.includes(message.user)) {
-                                // Clear the old alert if there was one
-                                if (this.m_currentSlackAlert) {
-                                    this.m_currentSlackAlert.clear();
-                                }
+    async handleIm(event) {
+        if (this.ALLOWED_USER_LIST.includes(event.user)) {
+            // Clear the old alert if there was one
+            if (this.m_currentSlackAlert) {
+                this.m_currentSlackAlert.clear();
+            }
 
-                                // Create a new alert
-                                this.m_currentSlackAlert = this.m_alertHandler.raiseAlert(AlertLevel.info, message.text, `Posted by ${await this.getUserDisplayName(message.user)}`, this.DM_TIMEOUT);
+            // Create a new alert
+            this.m_currentSlackAlert = this.m_alertHandler.raiseAlert(AlertLevel.info, event.text, `Posted by ${await this.getUserDisplayName(event.user)}`, this.DM_TIMEOUT);
 
-                                // React to message to show alert was made
-                                this.m_client.reactions.add({
-                                    channel: `${channel}`,
-                                    name: 'thumbsup',
-                                    timestamp: message.ts,
-                                });
-                            } else {
-                                this.sendMessage(channel.id, 'You are not permitted to publish messages to this dashboard.');
-                            }
-                        }
-                    }
-
-                    // Update the latest message
-                    this.m_imConversations[channel.id] = message;
-                }
+            // React to message to show alert was made
+            await this.m_bolt.client.reactions.add({
+                channel: event.channel,
+                name: 'thumbsup',
+                timestamp: event.event_ts,
             });
+
+            return true;
         }
+
+        // React to message to show alert was not allowed
+        await this.m_bolt.client.reactions.add({
+            channel: event.channel,
+            name: 'x',
+            timestamp: event.event_ts,
+        });
+
+        return false;
     }
 
     async update(date: Date) {
-        // Update by default, handle rate limit issue if needed
-        if (date.getTime() - this.SLACK_UPDATE_TIME * MS_PER_SECOND > this.m_prevSlackDate.getTime() && !this.m_rateLimit) {
-            this.updateIncidents();
-            this.updateDirectMessages();
-            this.m_prevSlackDate = date;
-        } else if (this.m_rateLimit) {
-            // Try again after SLACK_RATE_TIMEOUT amount of time
-            if (date.getTime() - this.SLACK_RATE_TIMEOUT * MS_PER_SECOND > this.m_prevSlackDate.getTime()) {
-                this.m_rateLimit = false;
-                this.m_prevSlackDate = date;
-            }
-        }
-
         // Remove current alert if cleared
         if (this.m_currentSlackAlert) {
             if (this.m_currentSlackAlert.isCleared()) {
