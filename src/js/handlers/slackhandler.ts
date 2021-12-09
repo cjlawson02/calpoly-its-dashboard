@@ -10,7 +10,10 @@ export default class SlackHandler implements Handler {
 
     private INCIDENT_CHANNEL_ID: string;
     private DR_PEOPLESOFT_ID: string;
+
+    private ALLOWED_USER_GROUP_ID: string;
     private ALLOWED_USER_LIST: string[];
+
     private INCIDENT_TIMEOUT: number;
     private DM_TIMEOUT: number;
 
@@ -42,11 +45,8 @@ export default class SlackHandler implements Handler {
         this.INCIDENT_CHANNEL_ID = incidentChannelID;
         this.DR_PEOPLESOFT_ID = drPeopleSoftID;
 
-        this.getUserGroupList(allowedUserGroupID).then((result) => {
-            if (result) {
-                this.ALLOWED_USER_LIST = result.users;
-            }
-        });
+        this.ALLOWED_USER_GROUP_ID = allowedUserGroupID;
+        this.updateAllowedUserList();
 
         this.INCIDENT_TIMEOUT = incidentTimeout;
         this.DM_TIMEOUT = dmTimeout;
@@ -68,6 +68,14 @@ export default class SlackHandler implements Handler {
                 logger.error(error);
             }
         });
+    }
+
+    /** Update the allowed user group list */
+    async updateAllowedUserList() {
+        const result = await this.getUserGroupList(this.ALLOWED_USER_GROUP_ID);
+        if (result) {
+            this.ALLOWED_USER_LIST = result.users;
+        }
     }
 
     /**
@@ -104,7 +112,10 @@ export default class SlackHandler implements Handler {
         return null;
     }
 
-    /** Check for new incident messages */
+    /**
+     * Handle incident channel messages. Publish alerts if from Dr. PeopleSoft bot
+     * @param event - The message event
+     */
     async handleIncident(event) {
         if (event.user === this.DR_PEOPLESOFT_ID) {
             this.m_alertHandler.raiseAlert(AlertLevel.warning, 'New Incident Raised!', event.text, this.INCIDENT_TIMEOUT);
@@ -122,8 +133,16 @@ export default class SlackHandler implements Handler {
         return false;
     }
 
-    /** Cycle through open DMs and check for new messages. Publish alerts if user in usergroup */
+    /**
+     * Handle IM/DM message. Publish alerts if user in usergroup
+     * @param event - The message event
+     */
     async handleIm(event) {
+        // Check if the list got updated if we get a user that was not allowed
+        if (!this.ALLOWED_USER_LIST.includes(event.user)) {
+            await this.updateAllowedUserList();
+        }
+
         if (this.ALLOWED_USER_LIST.includes(event.user)) {
             // Clear the old alert if there was one
             if (this.m_currentSlackAlert) {

@@ -31,11 +31,11 @@ const SLACK_SDLEADS_GROUPID = 'S02GM5Q3CKB'; // Restrict alerts generated from a
 const SLACK_INCIDENT_TIMEOUT = 120; // Incident alerts will be cleared after this many seconds
 const SLACK_DM_TIMEOUT = 120; // DM alerts will be cleared after this many seconds
 
-// Main Window
+// Main Window (Aruba and Jira are out of rotation because they require authentication)
 const URLS = [
     'http://solidus.calpoly.edu/WebApps/ContactCenter/WallDisplayScreens/Display?current=s458263',
-    'https://dashboard.capenetworks.com',
-    'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
+    // 'https://dashboard.capenetworks.com',
+    // 'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
 ];
 const WINDOW_UPDATE_TIME = 10; // How often the dashboard will change the URL in seconds
 const KIOSK_MODE = (process.env.KIOSK_MODE === 'true');

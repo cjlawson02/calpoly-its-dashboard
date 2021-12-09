@@ -25,18 +25,18 @@ export default class HoursHandler implements Handler {
     private updateHours() {
         switch (this.m_date.getDay()) {
         // Sunday
-        case 0:
-            this.m_openHour = 10;
-            this.m_closeHour = 16;
-            break;
-            // Saturday
-        case 6:
-            break;
-            // All week days
-        default:
-            this.m_openHour = 8;
-            this.m_closeHour = 17;
-            break;
+            case 0:
+                this.m_openHour = 10;
+                this.m_closeHour = 16;
+                break;
+                // Saturday
+            case 6:
+                break;
+                // All week days
+            default:
+                this.m_openHour = 8;
+                this.m_closeHour = 17;
+                break;
         }
     }
 

@@ -23,20 +23,20 @@ ipcRenderer.on('alert-level', (event, response: AlertLevel) => {
     const body = document.getElementById('body');
     let sound: HTMLAudioElement;
     switch (response) {
-    case AlertLevel.info:
-        body.classList.add('bg-info');
-        sound = new Audio('../audio/info.mp3');
-        break;
-    case AlertLevel.warning:
-        body.classList.add('bg-warning');
-        sound = new Audio('../audio/warning.mp3');
-        break;
-    case AlertLevel.critical:
-        body.classList.add('bg-danger');
-        sound = new Audio('../audio/critical.mp3');
-        break;
-    default:
-        break;
+        case AlertLevel.info:
+            body.classList.add('bg-info');
+            sound = new Audio('../audio/info.mp3');
+            break;
+        case AlertLevel.warning:
+            body.classList.add('bg-warning');
+            sound = new Audio('../audio/warning.mp3');
+            break;
+        case AlertLevel.critical:
+            body.classList.add('bg-danger');
+            sound = new Audio('../audio/critical.mp3');
+            break;
+        default:
+            break;
     }
     sound.play();
 });
