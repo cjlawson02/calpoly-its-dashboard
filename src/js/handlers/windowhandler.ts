@@ -93,11 +93,11 @@ export default class WindowHandler implements Handler {
         // Choose what to diplay
         switch (this.m_currentState) {
             case DashState.opening:
-                if (this.m_prevState !== DashState.opening) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/open.html'));
+                if (this.m_prevState !== DashState.opening) this.m_mainWindow.loadFile(path.join(__dirname, '../../../../src/html/open.html'));
                 this.m_prevState = DashState.opening;
                 break;
             case DashState.closing:
-                if (this.m_prevState !== DashState.closing) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/close.html'));
+                if (this.m_prevState !== DashState.closing) this.m_mainWindow.loadFile(path.join(__dirname, '../../../../src/html/close.html'));
                 this.m_prevState = DashState.closing;
                 break;
             case DashState.setup:
@@ -114,7 +114,7 @@ export default class WindowHandler implements Handler {
                 this.m_prevState = DashState.loop;
                 break;
             case DashState.alert:
-                if (this.m_prevAlert !== currentAlert) this.m_mainWindow.loadFile(path.join(__dirname, '../../src/html/alert.html'));
+                if (this.m_prevAlert !== currentAlert) this.m_mainWindow.loadFile(path.join(__dirname, '../../../../src/html/alert.html'));
                 this.m_prevState = DashState.alert;
                 this.m_prevAlert = currentAlert;
                 break;
