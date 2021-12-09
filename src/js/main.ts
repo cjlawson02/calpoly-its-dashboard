@@ -22,7 +22,7 @@ const hoursHandler = new HoursHanlder(config.openingWindow, config.closingWindow
 const mitelHandler = new MitelHandler(alertHandler, hoursHandler, config.mitelUpdatetime, config.minimumOnlineAgents, config.callQueueThreshold);
 
 // Slack Handler
-const slackHandler = new SlackHandler(config.slackEnabled, alertHandler, config.slackAppToken, config.slackAppToken, config.slackIncidentChannel, config.slackDrPeopleSoftID, config.slackSdLeadsGroupID, config.slackIncidentTimeout, config.slackDMTimeout);
+const slackHandler = new SlackHandler(config.slackEnabled, alertHandler, config.slackToken, config.slackAppToken, config.slackIncidentChannel, config.slackDrPeopleSoftID, config.slackSdLeadsGroupID, config.slackIncidentTimeout, config.slackDMTimeout);
 
 // Window Handler
 const windowHandler = new WindowHandler(alertHandler, hoursHandler, config.windowUpdateTime, config.kioskMode, config.urls);
