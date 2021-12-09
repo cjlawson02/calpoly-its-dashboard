@@ -1,44 +1,12 @@
-import env from 'dotenv';
 import { app, BrowserWindow } from 'electron';
 
+import config from '../../config';
 import Handler from './handlers/handler';
 import AlertHandler from './handlers/alerthandler';
 import HoursHanlder from './handlers/hourshandler';
 import MitelHandler from './handlers/mitelhandler';
 import SlackHandler from './handlers/slackhandler';
 import WindowHandler from './handlers/windowhandler';
-
-env.config();
-
-//
-// Tunables
-//
-
-// Opening/Closing
-const OPENING_WINDOW = 15; // Show opening message for 15 min after open
-const CLOSING_WINDOW = 10; // Show closing message for 10 min before close
-
-// Mitel
-const ONLINE_AGENT_MINIMUM = 2; // Number of minimum agents needed, otherwise alert
-const CALL_QUEUE_THRESHOLD = 2; // Maximum calls allowed in the queue, otherwise alert
-const MITEL_UPDATE_TIME = 1; // How often to update the Mitel data in seconds
-
-// Slack
-const { SLACK_TOKEN, SLACK_APP_TOKEN } = process.env; // Get the API token from the environment
-const SLACK_INCIDENT_CHANNEL = 'CM8KV8A1M'; // Monitor this channel for incident alerts
-const SLACK_DR_PEOPLESOFT_ID = 'UFP3Y0M17'; // Bot ID for the Dr. PeopleSoft bot
-const SLACK_SDLEADS_GROUPID = 'S02GM5Q3CKB'; // Restrict alerts generated from a DM to only those in the @sd-leads group
-const SLACK_INCIDENT_TIMEOUT = 120; // Incident alerts will be cleared after this many seconds
-const SLACK_DM_TIMEOUT = 120; // DM alerts will be cleared after this many seconds
-
-// Main Window (Aruba and Jira are out of rotation because they require authentication)
-const URLS = [
-    'http://solidus.calpoly.edu/WebApps/ContactCenter/WallDisplayScreens/Display?current=s458263',
-    // 'https://dashboard.capenetworks.com',
-    // 'https://calpoly.atlassian.net/secure/Dashboard.jspa?selectPageId=10190',
-];
-const WINDOW_UPDATE_TIME = 10; // How often the dashboard will change the URL in seconds
-const KIOSK_MODE = (process.env.KIOSK_MODE === 'true');
 
 //
 // Handler setup
@@ -48,16 +16,16 @@ const KIOSK_MODE = (process.env.KIOSK_MODE === 'true');
 const alertHandler = new AlertHandler();
 
 // Hours Handler
-const hoursHandler = new HoursHanlder(OPENING_WINDOW, CLOSING_WINDOW);
+const hoursHandler = new HoursHanlder(config.openingWindow, config.closingWindow);
 
 // Mitel Handler
-const mitelHandler = new MitelHandler(alertHandler, hoursHandler, MITEL_UPDATE_TIME, ONLINE_AGENT_MINIMUM, CALL_QUEUE_THRESHOLD);
+const mitelHandler = new MitelHandler(alertHandler, hoursHandler, config.mitelUpdatetime, config.minimumOnlineAgents, config.callQueueThreshold);
 
 // Slack Handler
-const slackHandler = new SlackHandler(alertHandler, SLACK_TOKEN, SLACK_APP_TOKEN, SLACK_INCIDENT_CHANNEL, SLACK_DR_PEOPLESOFT_ID, SLACK_SDLEADS_GROUPID, SLACK_INCIDENT_TIMEOUT, SLACK_DM_TIMEOUT);
+const slackHandler = new SlackHandler(config.slackEnabled, alertHandler, config.slackAppToken, config.slackAppToken, config.slackIncidentChannel, config.slackDrPeopleSoftID, config.slackSdLeadsGroupID, config.slackIncidentTimeout, config.slackDMTimeout);
 
 // Window Handler
-const windowHandler = new WindowHandler(alertHandler, hoursHandler, WINDOW_UPDATE_TIME, KIOSK_MODE, URLS);
+const windowHandler = new WindowHandler(alertHandler, hoursHandler, config.windowUpdateTime, config.kioskMode, config.urls);
 
 // Combine handlers
 const handlers: Handler[] = [hoursHandler, mitelHandler, slackHandler, alertHandler, windowHandler];

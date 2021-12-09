@@ -6,7 +6,7 @@
     "build": "tsc",
     "watch": "tsc -w",
     "lint": "eslint --fix -c .eslintrc.json --ext .ts ./src",
-    "start": "npm run build && electron ./dist/main.js"
+    "start": "npm run build && electron ./dist/src/js/main.js"
   },
   "repository": "https://github.com/Chris2fourlaw/calpoly-its-dashboard",
   "keywords": [

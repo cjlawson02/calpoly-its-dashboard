@@ -21,6 +21,7 @@ export default class SlackHandler implements Handler {
 
     /**
      * Create the Slack handler
+     * @param enabled - Whether to enable the integration
      * @param alertHandler - The alert handler
      * @param token - The Slack Bot API token
      * @param appToken - The Slack App API token
@@ -30,48 +31,50 @@ export default class SlackHandler implements Handler {
      * @param incidentTimeout - The number of seconds that an incident alert will be displayed
      * @param dmTimeout - The number of seconds that a DM alert will be displayed
      */
-    constructor(alertHandler: AlertHandler, token: string, appToken: string, incidentChannelID: string, drPeopleSoftID: string, allowedUserGroupID: string, incidentTimeout: number, dmTimeout: number) {
-        this.m_alertHandler = alertHandler;
-        this.m_bolt = new App({
-            token,
-            appToken,
-            socketMode: true,
-        });
+    constructor(enabled: boolean, alertHandler: AlertHandler, token: string, appToken: string, incidentChannelID: string, drPeopleSoftID: string, allowedUserGroupID: string, incidentTimeout: number, dmTimeout: number) {
+        if (enabled) {
+            this.m_alertHandler = alertHandler;
+            this.m_bolt = new App({
+                token,
+                appToken,
+                socketMode: true,
+            });
 
-        (async () => {
-            await this.m_bolt.start();
-        })();
+            (async () => {
+                await this.m_bolt.start();
+            })();
 
-        this.INCIDENT_CHANNEL_ID = incidentChannelID;
-        this.DR_PEOPLESOFT_ID = drPeopleSoftID;
+            this.INCIDENT_CHANNEL_ID = incidentChannelID;
+            this.DR_PEOPLESOFT_ID = drPeopleSoftID;
 
-        this.ALLOWED_USER_GROUP_ID = allowedUserGroupID;
-        this.updateAllowedUserList();
+            this.ALLOWED_USER_GROUP_ID = allowedUserGroupID;
+            this.updateAllowedUserList();
 
-        this.INCIDENT_TIMEOUT = incidentTimeout;
-        this.DM_TIMEOUT = dmTimeout;
+            this.INCIDENT_TIMEOUT = incidentTimeout;
+            this.DM_TIMEOUT = dmTimeout;
 
-        this.m_currentSlackAlert = null;
+            this.m_currentSlackAlert = null;
 
-        this.m_bolt.message(async ({ event, say, logger }) => {
-            try {
-                if (event.channel_type === 'im') {
-                    if (!await this.handleIm(event)) {
-                        await say('You are not permitted to post alerts on this system.');
+            this.m_bolt.message(async ({ event, say, logger }) => {
+                try {
+                    if (event.channel_type === 'im') {
+                        if (!await this.handleIm(event)) {
+                            await say('You are not permitted to post alerts on this system.');
+                        }
+                    } else if (event.channel_type === 'channel') {
+                        if (event.channel === this.INCIDENT_CHANNEL_ID) {
+                            await this.handleIncident(event);
+                        }
                     }
-                } else if (event.channel_type === 'channel') {
-                    if (event.channel === this.INCIDENT_CHANNEL_ID) {
-                        await this.handleIncident(event);
-                    }
+                } catch (error) {
+                    logger.error(error);
                 }
-            } catch (error) {
-                logger.error(error);
-            }
-        });
+            });
+        }
     }
 
     /** Update the allowed user group list */
-    async updateAllowedUserList() {
+    private async updateAllowedUserList() {
         const result = await this.getUserGroupList(this.ALLOWED_USER_GROUP_ID);
         if (result) {
             this.ALLOWED_USER_LIST = result.users;
@@ -83,7 +86,7 @@ export default class SlackHandler implements Handler {
      * @param userGroupID - The ID for the user group
      * @returns The user group list from Slack's API.
      */
-    async getUserGroupList(userGroupID: string) {
+    private async getUserGroupList(userGroupID: string) {
         const result = await this.m_bolt.client.usergroups.users.list({ usergroup: userGroupID }).catch((error) => {
             console.error(error);
         });
@@ -100,7 +103,7 @@ export default class SlackHandler implements Handler {
      * @param userID - The user's ID
      * @returns The display name of the user
      */
-    async getUserDisplayName(userID: string) {
+    private async getUserDisplayName(userID: string) {
         const result = await this.m_bolt.client.users.profile.get({ user: userID }).catch((error) => {
             console.error(error);
         });
@@ -116,7 +119,7 @@ export default class SlackHandler implements Handler {
      * Handle incident channel messages. Publish alerts if from Dr. PeopleSoft bot
      * @param event - The message event
      */
-    async handleIncident(event) {
+    private async handleIncident(event) {
         if (event.user === this.DR_PEOPLESOFT_ID) {
             this.m_alertHandler.raiseAlert(AlertLevel.warning, 'New Incident Raised!', event.text, this.INCIDENT_TIMEOUT);
 
@@ -137,7 +140,7 @@ export default class SlackHandler implements Handler {
      * Handle IM/DM message. Publish alerts if user in usergroup
      * @param event - The message event
      */
-    async handleIm(event) {
+    private async handleIm(event) {
         // Check if the list got updated if we get a user that was not allowed
         if (!this.ALLOWED_USER_LIST.includes(event.user)) {
             await this.updateAllowedUserList();
