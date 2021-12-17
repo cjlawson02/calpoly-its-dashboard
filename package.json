@@ -32,7 +32,7 @@
   "dependencies": {
     "@slack/bolt": "^3.8.1",
     "dotenv": "^10.0.0",
-    "electron": "^16.0.0",
+    "electron": "^16.0.5",
     "request": "^2.88.2",
     "ts-priority-queue": "^0.1.1"
   }
