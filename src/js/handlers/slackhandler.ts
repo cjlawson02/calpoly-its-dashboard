@@ -9,8 +9,6 @@ export default class SlackHandler implements Handler {
     private m_bolt: App;
 
     private INCIDENT_CHANNEL_ID: string;
-    private DR_PEOPLESOFT_ID: string;
-
     private ALLOWED_USER_GROUP_ID: string;
     private ALLOWED_USER_LIST: string[];
 
@@ -26,12 +24,11 @@ export default class SlackHandler implements Handler {
      * @param token - The Slack Bot API token
      * @param appToken - The Slack App API token
      * @param incidentChannelID - The Slack incident channel ID to watch
-     * @param drPeopleSoftID - The ID for the Dr. PeopleSoft bot
      * @param allowedUserGroupID - The group ID of users allowed to DM the bot for info alerts
      * @param incidentTimeout - The number of seconds that an incident alert will be displayed
      * @param dmTimeout - The number of seconds that a DM alert will be displayed
      */
-    constructor(enabled: boolean, alertHandler: AlertHandler, token: string, appToken: string, incidentChannelID: string, drPeopleSoftID: string, allowedUserGroupID: string, incidentTimeout: number, dmTimeout: number) {
+    constructor(enabled: boolean, alertHandler: AlertHandler, token: string, appToken: string, incidentChannelID: string, allowedUserGroupID: string, incidentTimeout: number, dmTimeout: number) {
         if (enabled) {
             this.m_alertHandler = alertHandler;
             this.m_bolt = new App({
@@ -45,8 +42,6 @@ export default class SlackHandler implements Handler {
             })();
 
             this.INCIDENT_CHANNEL_ID = incidentChannelID;
-            this.DR_PEOPLESOFT_ID = drPeopleSoftID;
-
             this.ALLOWED_USER_GROUP_ID = allowedUserGroupID;
             this.updateAllowedUserList();
 
@@ -116,11 +111,11 @@ export default class SlackHandler implements Handler {
     }
 
     /**
-     * Handle incident channel messages. Publish alerts if from Dr. PeopleSoft bot
+     * Handle incident channel messages. Publish alerts if from a bot
      * @param event - The message event
      */
     private async handleIncident(event) {
-        if (event.user === this.DR_PEOPLESOFT_ID) {
+        if (event.subtype === 'bot_message') {
             this.m_alertHandler.raiseAlert(AlertLevel.warning, 'New Incident Raised!', event.text, this.INCIDENT_TIMEOUT);
 
             // React to message to show alert was made

@@ -37,8 +37,6 @@ export default {
     //
     /** Monitor this channel for incident alerts */
     slackIncidentChannel: 'CM8KV8A1M',
-    /** Bot ID for the Dr. PeopleSoft bot */
-    slackDrPeopleSoftID: 'UFP3Y0M17',
     /** Restrict alerts generated from a DM to only those in the \@sd-leads group */
     slackSdLeadsGroupID: 'S02GM5Q3CKB',
     /** Incident alerts will be cleared after this many seconds */
