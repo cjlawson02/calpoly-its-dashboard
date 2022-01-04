@@ -1,4 +1,5 @@
 import { app, BrowserWindow } from 'electron';
+import AutoLaunch from 'auto-launch';
 
 import config from '../../config';
 import Handler from './handlers/handler';
@@ -34,6 +35,24 @@ async function updateHandlers(date: Date) {
     const handlerPromises = [];
     handlers.forEach((handler) => handlerPromises.push(handler.update(date)));
     await Promise.all(handlerPromises);
+}
+
+//
+// Autolauncher
+//
+
+const dashAutoLauncher = new AutoLaunch({
+    name: 'Cal Poly ITS Dashboard',
+});
+
+if (config.autoLaunch) {
+    dashAutoLauncher.enable();
+} else {
+    dashAutoLauncher.isEnabled().then((isEnabled) => {
+        if (isEnabled) {
+            dashAutoLauncher.disable();
+        }
+    });
 }
 
 //

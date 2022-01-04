@@ -55,4 +55,6 @@ export default {
     slackAppToken: process.env.SLACK_APP_TOKEN,
     /** Get kiosk mode from the environment */
     kioskMode: (process.env.KIOSK_MODE === 'true'),
+    /** Get auto launch mode from the environment */
+    autoLaunch: (process.env.AUTO_LAUNCH === 'true'),
 };

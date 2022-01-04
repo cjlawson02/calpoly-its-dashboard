@@ -31,6 +31,7 @@
   },
   "dependencies": {
     "@slack/bolt": "^3.8.1",
+    "auto-launch": "^5.0.5",
     "dotenv": "^10.0.0",
     "electron": "^16.0.0",
     "request": "^2.88.2",
