@@ -87,9 +87,13 @@ export default class MitelHandler implements Handler {
             if (!this.m_currentQueueAlert) {
                 this.m_currentQueueAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, `${this.m_queueNum} calls in queue!`, 'Please get some people on the phones');
                 this.m_prevQueueNum = this.m_queueNum;
-            } else if (this.m_currentQueueAlert && this.m_prevQueueNum !== this.m_queueNum) {
+            } else if (this.m_currentQueueAlert && this.m_prevQueueNum >= this.m_queueNum + 5) {
                 this.m_currentQueueAlert.clear();
                 this.m_currentQueueAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, `${this.m_queueNum} calls in queue!`, 'Please get some people on the phones');
+                this.m_prevQueueNum = this.m_queueNum;
+            } else if (this.m_currentQueueAlert && this.m_prevQueueNum < this.m_queueNum) {
+                this.m_currentQueueAlert.clear();
+                this.m_currentQueueAlert = this.m_alertHandler.raiseAlert(AlertLevel.critical, `${this.m_queueNum} calls in queue!`, 'Please get some people on the phones', undefined, false);
                 this.m_prevQueueNum = this.m_queueNum;
             }
         } else if (this.m_currentQueueAlert) this.m_currentQueueAlert.clear();

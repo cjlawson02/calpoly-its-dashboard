@@ -4,6 +4,14 @@
 import { ipcRenderer } from 'electron';
 import { AlertLevel } from './util/alert';
 
+let sound: HTMLAudioElement;
+
+function playSound() {
+    if (sound) {
+        sound.play();
+    }
+}
+
 const replaceText = (selector: string, text: string) => {
     const element = document.getElementById(selector);
     if (element) {
@@ -21,7 +29,6 @@ ipcRenderer.on('alert-desc', (event, response) => {
 
 ipcRenderer.on('alert-level', (event, response: AlertLevel) => {
     const body = document.getElementById('body');
-    let sound: HTMLAudioElement;
     switch (response) {
         case AlertLevel.info:
             body.classList.add('bg-info');
@@ -38,7 +45,13 @@ ipcRenderer.on('alert-level', (event, response: AlertLevel) => {
         default:
             break;
     }
-    sound.play();
+});
+
+ipcRenderer.on('alert-sound', (event, response: boolean) => {
+    // response comes from alert.sound
+    if (response) {
+        playSound();
+    }
 });
 
 window.addEventListener('DOMContentLoaded', () => {

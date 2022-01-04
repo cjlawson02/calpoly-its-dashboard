@@ -15,6 +15,7 @@ export default class AlertHandler implements Handler {
                 event.sender.send('alert-title', this.getCurrentAlert().getTitle().toString());
                 event.sender.send('alert-desc', this.getCurrentAlert().getDescription().toString());
                 event.sender.send('alert-level', this.getCurrentAlert().getLevel());
+                event.sender.send('alert-sound', this.getCurrentAlert().getSound());
             }
         });
     }
@@ -44,18 +45,19 @@ export default class AlertHandler implements Handler {
      * @param level - The level of severity
      * @param title - The title for the alert
      * @param description - The description for the alert
+     * @param sound - Enable the sound of the alert
      * @param timeout - The timeout period in seconds
      * @returns The newly created alert
      */
-    raiseAlert(level: AlertLevel, title: String, description: String, timeout?: number): Alert {
-        let alert: Alert;
-
-        if (timeout) {
-            alert = new Alert(level, title, description, timeout * 1000);
+    raiseAlert(level: AlertLevel, title: String, description: String, timeout?: number, sound?: boolean): Alert {
+        let updatedSound: boolean;
+        if (sound === undefined) {
+            updatedSound = true;
         } else {
-            alert = new Alert(level, title, description, null);
+            updatedSound = sound;
         }
 
+        const alert = new Alert(level, title, description, timeout * 1000, updatedSound);
         this.m_alerts.queue(alert);
         return alert;
     }

@@ -16,6 +16,7 @@ export class Alert {
     private m_level: AlertLevel;
     private m_title: String;
     private m_description: String;
+    private m_sound: boolean;
     private m_timeout: number;
     private m_cleared: boolean;
     private m_timestamp: Date;
@@ -26,12 +27,14 @@ export class Alert {
      * @param title - The title of the issue
      * @param description - The description of the issue
      * @param timeout - The timeout period of the alert in seconds
+     * @param sound - Enable the sound of the alert
      */
-    constructor(level: AlertLevel, title: String, description: String, timeout: number) {
+    constructor(level: AlertLevel, title: String, description: String, timeout: number, sound: boolean) {
         this.m_level = level;
         this.m_title = title;
         this.m_description = description;
         this.m_timeout = timeout;
+        this.m_sound = sound;
         this.m_cleared = false;
         this.m_timestamp = new Date();
     }
@@ -59,6 +62,12 @@ export class Alert {
      * @returns The timeout of the alert in milliseconds
      */
     public getTimeout() { return this.m_timeout; }
+
+    /**
+     * Check if the alert has sound enabled
+     * @returns The sound status of the alert
+     */
+    public getSound() { return this.m_sound; }
 
     /**
      * Get the alert's timestamp
