@@ -21,6 +21,7 @@
   "license": "CC0-1.0",
   "devDependencies": {
     "@types/slack-node": "^0.1.4",
+    "@types/auto-launch": "^5.0.2",
     "@typescript-eslint/eslint-plugin": "^5.2.0",
     "@typescript-eslint/parser": "^5.2.0",
     "eslint": "^8.1.0",
